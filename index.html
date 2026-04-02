@@ -1052,25 +1052,15 @@
         <div class="summary-label">↓ Saídas</div>
         <div class="summary-value expense" id="dash-expense">R$ 0,00</div>
       </div>
-      <div class="summary-card balance full-width">
-        <div class="summary-label">≡ Resultado do Mês (entradas − saídas)</div>
-        <div class="summary-value balance" id="dash-balance">R$ 0,00</div>
+      <div class="summary-card banks full-width">
+        <div class="summary-label">💳 Saldo Total em Carteira</div>
+        <div class="summary-value banks" id="dash-balance">R$ 0,00</div>
       </div>
 
     </div>
 
     <div class="section-title">Saldo por Banco</div>
-    <div id="dash-banks-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-      <div class="empty-state" style="padding:20px;">
-        <div class="empty-icon" style="font-size:1.5rem;">🏦</div>
-        Nenhum banco cadastrado ainda
-      </div>
-    </div>
-    <!-- total -->
-    <div class="summary-card banks" style="margin-bottom:24px;">
-      <div class="summary-label">💳 Saldo Total em Carteira</div>
-      <div class="summary-value banks" id="dash-total-banks">R$ 0,00</div>
-    </div>
+    <div id="dash-banks-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;"></div>
 
     <div class="section-title">Saúde Financeira do Mês</div>
     <div class="score-ring-container">
@@ -1596,13 +1586,14 @@ function renderDashboard() {
   // ── Movimentação do mês ──
   document.getElementById('dash-income').textContent  = fmt(income);
   document.getElementById('dash-expense').textContent = fmt(expense);
-  document.getElementById('dash-balance').textContent = fmt(result);
-  document.getElementById('dash-balance').style.color = result >= 0 ? 'var(--accent2)' : 'var(--expense)';
 
-  // ── Saldo por banco (saldo real informado pelo usuário) ──
+  // ── Saldo Total em Carteira (soma de todos os bancos) ──
   const totalBanks = banks.reduce((s, b) => s + (b.balance || 0), 0);
-  document.getElementById('dash-total-banks').textContent = fmt(totalBanks);
+  const balEl = document.getElementById('dash-balance');
+  balEl.textContent = fmt(totalBanks);
+  balEl.style.color = totalBanks >= 0 ? 'var(--accent4)' : 'var(--expense)';
 
+  // ── Saldo por banco (lista no dashboard) ──
   const bankListEl = document.getElementById('dash-banks-list');
   if (!banks.length) {
     bankListEl.innerHTML = `<div class="empty-state" style="padding:16px;">
