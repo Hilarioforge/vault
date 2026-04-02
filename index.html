@@ -1054,6 +1054,10 @@
         <div class="summary-label">Saldo do Mês</div>
         <div class="summary-value balance" id="dash-balance">R$ 0,00</div>
       </div>
+      <div class="summary-card banks full-width">
+        <div class="summary-label">💳 Total em Carteira (todos os bancos)</div>
+        <div class="summary-value banks" id="dash-total-banks">R$ 0,00</div>
+      </div>
     </div>
 
     <div class="section-title">Saúde Financeira</div>
@@ -1094,10 +1098,16 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <button class="add-btn" onclick="openTxModal()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Nova Transação
-    </button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <button class="add-btn" style="margin-bottom:0;" onclick="openTxModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova Transação
+      </button>
+      <button class="add-btn" style="margin-bottom:0;border-color:var(--accent2);color:var(--accent2);" onclick="openImportModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Importar Extrato
+      </button>
+    </div>
 
     <div class="filter-chips">
       <div class="chip active" onclick="setFilter('all', this)">Todas</div>
@@ -1278,6 +1288,49 @@
   </div>
 </div>
 
+<!-- MODAL: IMPORT -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
+    <div class="modal-title">Importar Extrato — C6 Bank</div>
+
+    <div id="import-step-1">
+      <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text3);margin-bottom:16px;line-height:1.8;">
+        Suporta <span style="color:var(--accent)">OFX</span> e <span style="color:var(--accent)">CSV</span> do C6 Bank.<br/>
+        No app C6: Extrato → Exportar → OFX ou CSV
+      </div>
+      <div id="drop-zone" onclick="document.getElementById('file-input').click()"
+        style="border:2px dashed var(--border);border-radius:6px;padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:16px;">
+        <div style="font-size:2.5rem;margin-bottom:12px;">📂</div>
+        <div style="font-family:var(--font-body);font-size:1rem;color:var(--text2);font-weight:600;">Clique ou arraste o arquivo aqui</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text3);margin-top:8px;">.OFX · .CSV</div>
+      </div>
+      <input type="file" id="file-input" accept=".ofx,.csv,.txt" style="display:none;" onchange="handleFileSelect(this)" />
+      <div class="form-field">
+        <label>Vincular ao Banco</label>
+        <select id="import-bank-sel"><option value="">— Nenhum —</option></select>
+      </div>
+      <button class="btn-cancel" style="width:100%;margin-top:8px;" onclick="closeImportModal()">Cancelar</button>
+    </div>
+
+    <div id="import-step-2" style="display:none;">
+      <div id="import-summary" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px 16px;margin-bottom:16px;font-family:var(--font-mono);font-size:0.7rem;color:var(--text2);line-height:1.8;"></div>
+      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text3);margin-bottom:10px;letter-spacing:0.1em;">PRÉVIA — clique ✕ para remover</div>
+      <div id="import-preview" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="resetImport()">← Voltar</button>
+        <button class="btn-save" onclick="confirmImport()" id="confirm-import-btn">Importar Tudo</button>
+      </div>
+    </div>
+
+    <div id="import-step-3" style="display:none;text-align:center;padding:20px 0;">
+      <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+      <div style="font-family:var(--font-display);font-size:0.9rem;color:var(--accent);letter-spacing:0.15em;">IMPORTADO!</div>
+      <div id="import-done-msg" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text3);margin-top:10px;"></div>
+      <button class="btn-save" style="width:100%;margin-top:24px;" onclick="closeImportModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: EDIT BANK BALANCE -->
 <div class="modal-overlay" id="edit-bank-modal">
   <div class="modal">
@@ -1442,6 +1495,11 @@ function renderDashboard() {
   document.getElementById('dash-balance').textContent = fmt(balance);
   document.getElementById('dash-balance').style.color = balance >= 0 ? 'var(--accent2)' : 'var(--expense)';
 
+  // Total em carteira (soma dos bancos cadastrados)
+  const totalBanks = banks.reduce((s, b) => s + (b.balance || 0), 0);
+  const dbEl = document.getElementById('dash-total-banks');
+  if (dbEl) dbEl.textContent = fmt(totalBanks);
+
   // Score ring
   const pct = income > 0 ? Math.max(0, Math.min(100, Math.round((balance / income) * 100))) : 0;
   document.getElementById('score-pct').textContent = pct + '%';
@@ -1584,6 +1642,15 @@ window.setType = function(t) {
   document.getElementById('type-expense-btn').classList.toggle('active', t === 'expense');
 };
 
+// ─── RENDER ALL (garante que todas as telas ficam sincronizadas) ───
+async function refreshAll() {
+  await Promise.all([loadTransactions(), loadBanks(), loadGoals()]);
+  renderDashboard();
+  renderTransactions();
+  renderBanks();
+  renderGoals();
+}
+
 window.saveTx = async function() {
   const desc = document.getElementById('tx-desc').value.trim();
   const amount = parseFloat(document.getElementById('tx-amount').value);
@@ -1596,18 +1663,14 @@ window.saveTx = async function() {
 
   await addDoc(txCol(), { uid: currentUser.uid, type: txType, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
   closeTxModal();
-  await loadTransactions();
-  renderDashboard();
-  renderTransactions();
+  await refreshAll();
   showToast('Transação salva!');
 };
 
 window.deleteTx = async function(id) {
   if (!confirm('Excluir esta transação?')) return;
   await deleteDoc(doc(db, 'vault_transactions', id));
-  await loadTransactions();
-  renderDashboard();
-  renderTransactions();
+  await refreshAll();
   showToast('Excluído');
 };
 
@@ -1657,8 +1720,7 @@ window.saveBank = async function() {
   if (!name) { showToast('Informe o nome do banco'); return; }
   await addDoc(banksCol(), { uid: currentUser.uid, name, balance, color, createdAt: Date.now() });
   closeBankModal();
-  await loadBanks();
-  renderBanks();
+  await refreshAll();
   showToast('Banco adicionado!');
 };
 
@@ -1672,16 +1734,14 @@ window.saveEditBank = async function() {
   const balance = parseFloat(document.getElementById('edit-bank-balance').value) || 0;
   await updateDoc(doc(db, 'vault_banks', editingBankId), { balance });
   document.getElementById('edit-bank-modal').classList.remove('open');
-  await loadBanks();
-  renderBanks();
+  await refreshAll();
   showToast('Saldo atualizado!');
 };
 
 window.deleteBank = async function(id) {
   if (!confirm('Excluir este banco?')) return;
   await deleteDoc(doc(db, 'vault_banks', id));
-  await loadBanks();
-  renderBanks();
+  await refreshAll();
   showToast('Banco removido');
 };
 
@@ -1734,16 +1794,14 @@ window.saveGoal = async function() {
   if (!name || !target) { showToast('Preencha nome e valor'); return; }
   await addDoc(goalsCol(), { uid: currentUser.uid, name, target, saved, deadline, createdAt: Date.now() });
   closeGoalModal();
-  await loadGoals();
-  renderGoals();
+  await refreshAll();
   showToast('Meta criada!');
 };
 
 window.deleteGoal = async function(id) {
   if (!confirm('Excluir esta meta?')) return;
   await deleteDoc(doc(db, 'vault_goals', id));
-  await loadGoals();
-  renderGoals();
+  await refreshAll();
   showToast('Meta removida');
 };
 
@@ -1759,6 +1817,272 @@ window.showToast = function(msg) {
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
 });
+
+// ─── IMPORT ───
+let importedTxs = [];
+let importBankId = '';
+let importBankName = '';
+
+window.openImportModal = function() {
+  resetImport();
+  // populate bank select
+  const sel = document.getElementById('import-bank-sel');
+  sel.innerHTML = '<option value="">— Nenhum —</option>' +
+    banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  document.getElementById('import-modal').classList.add('open');
+
+  // drag and drop
+  const dz = document.getElementById('drop-zone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.style.borderColor = 'var(--accent)'; dz.style.background = 'rgba(0,245,196,0.04)'; });
+  dz.addEventListener('dragleave', () => { dz.style.borderColor = 'var(--border)'; dz.style.background = ''; });
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.style.borderColor = 'var(--border)';
+    dz.style.background = '';
+    const f = e.dataTransfer.files[0];
+    if (f) processFile(f);
+  });
+};
+
+window.closeImportModal = function() {
+  document.getElementById('import-modal').classList.remove('open');
+  resetImport();
+};
+
+window.resetImport = function() {
+  importedTxs = [];
+  document.getElementById('import-step-1').style.display = 'block';
+  document.getElementById('import-step-2').style.display = 'none';
+  document.getElementById('import-step-3').style.display = 'none';
+  document.getElementById('file-input').value = '';
+};
+
+window.handleFileSelect = function(input) {
+  const f = input.files[0];
+  if (f) processFile(f);
+};
+
+function processFile(file) {
+  const name = file.name.toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    if (name.endsWith('.ofx') || name.endsWith('.txt')) {
+      importedTxs = parseOFX(content);
+    } else if (name.endsWith('.csv')) {
+      importedTxs = parseCSV(content);
+    } else {
+      showToast('Formato não suportado. Use OFX ou CSV.');
+      return;
+    }
+    if (!importedTxs.length) { showToast('Nenhuma transação encontrada no arquivo.'); return; }
+    showImportPreview();
+  };
+  reader.readAsText(file, 'latin1');
+}
+
+// ─── OFX PARSER ───
+function parseOFX(content) {
+  const txs = [];
+  const stmtBlocks = content.split(/<STMTTRN>/i).slice(1);
+  stmtBlocks.forEach(block => {
+    const get = tag => {
+      const m = block.match(new RegExp(`<${tag}>([^<\r\n]+)`, 'i'));
+      return m ? m[1].trim() : '';
+    };
+    const trntype = get('TRNTYPE').toUpperCase();
+    const dtposted = get('DTPOSTED');
+    const amt = parseFloat(get('TRNAMT').replace(',', '.'));
+    const memo = get('MEMO') || get('NAME') || 'Importado';
+
+    if (!dtposted || isNaN(amt)) return;
+
+    // Parse date: YYYYMMDD or YYYYMMDDHHMMSS
+    const y = dtposted.substring(0,4);
+    const mo = dtposted.substring(4,6);
+    const d = dtposted.substring(6,8);
+    const date = `${y}-${mo}-${d}`;
+
+    const type = amt >= 0 ? 'income' : 'expense';
+    const amount = Math.abs(amt);
+    const category = autoCategory(memo);
+
+    txs.push({ type, description: cleanDesc(memo), amount, date, category });
+  });
+  return txs;
+}
+
+// ─── CSV PARSER (C6 Bank format) ───
+function parseCSV(content) {
+  const txs = [];
+  const lines = content.split(/\r?\n/).filter(l => l.trim());
+
+  // Find header row
+  let headerIdx = -1;
+  let headers = [];
+  for (let i = 0; i < lines.length; i++) {
+    const cols = splitCSV(lines[i]);
+    const joined = cols.join('|').toLowerCase();
+    if (joined.includes('data') && (joined.includes('valor') || joined.includes('lançamento'))) {
+      headerIdx = i;
+      headers = cols.map(h => h.toLowerCase().trim().replace(/['"]/g,''));
+      break;
+    }
+  }
+
+  if (headerIdx === -1) {
+    // Try generic: assume first row is header
+    headerIdx = 0;
+    headers = splitCSV(lines[0]).map(h => h.toLowerCase().trim().replace(/['"]/g,''));
+  }
+
+  // Find column indices
+  const dateCol = headers.findIndex(h => h.includes('data'));
+  const descCol = headers.findIndex(h => h.includes('lançamento') || h.includes('descri') || h.includes('histor') || h.includes('memo'));
+  const valCol  = headers.findIndex(h => h.includes('valor') || h.includes('quantia'));
+  const typeCol = headers.findIndex(h => h.includes('tipo') || h.includes('natureza'));
+
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const cols = splitCSV(lines[i]);
+    if (cols.length < 2) continue;
+
+    const rawDate = (cols[dateCol] || '').replace(/['"]/g,'').trim();
+    const rawDesc = (cols[descCol !== -1 ? descCol : 1] || '').replace(/['"]/g,'').trim();
+    const rawVal  = (cols[valCol !== -1 ? valCol : cols.length - 1] || '').replace(/['"R$\s]/g,'').replace(',','.').trim();
+
+    const amount = parseFloat(rawVal);
+    if (!rawDate || isNaN(amount) || amount === 0) continue;
+
+    // Parse date DD/MM/YYYY or YYYY-MM-DD
+    let date = '';
+    if (rawDate.includes('/')) {
+      const [d, m, y] = rawDate.split('/');
+      date = `${y?.length === 4 ? y : '20'+y}-${m?.padStart(2,'0')}-${d?.padStart(2,'0')}`;
+    } else {
+      date = rawDate.substring(0,10);
+    }
+
+    // Determine type
+    let type = amount < 0 ? 'expense' : 'income';
+    if (typeCol !== -1) {
+      const t = (cols[typeCol] || '').toLowerCase();
+      if (t.includes('déb') || t.includes('saída') || t.includes('pagamento')) type = 'expense';
+      if (t.includes('créd') || t.includes('entrada') || t.includes('recebimento')) type = 'income';
+    }
+
+    const category = autoCategory(rawDesc);
+    txs.push({ type, description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category });
+  }
+  return txs;
+}
+
+function splitCSV(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuotes = !inQuotes; continue; }
+    if ((ch === ',' || ch === ';') && !inQuotes) { result.push(current); current = ''; continue; }
+    current += ch;
+  }
+  result.push(current);
+  return result;
+}
+
+function cleanDesc(s) {
+  return s.replace(/\s+/g, ' ').replace(/[*]/g, '').trim().substring(0, 60) || 'Importado';
+}
+
+// ─── AUTO CATEGORIZER ───
+function autoCategory(desc) {
+  const d = desc.toLowerCase();
+  if (/mercado|supermerc|hortifruti|atacad|carrefour|extra|pao de acucar|assai|makro|sacolao|feira|verdur/.test(d)) return 'Alimentação';
+  if (/restaur|lanche|burger|mc|subway|pizza|sushi|deliver|ifood|rappi|uber eat|padaria|cafe|bar |botec|churrasco/.test(d)) return 'Alimentação';
+  if (/posto|gasolina|combustiv|shell|ipiranga|br distribu|petrobras|etanol/.test(d)) return 'Transporte';
+  if (/uber|99|cabify|taxi|onibus|metro|bilhete|condução/.test(d)) return 'Transporte';
+  if (/farmacia|drogaria|remedios|unimed|plano de saude|hospital|clinica|medic|dentist|exame|laborat/.test(d)) return 'Saúde';
+  if (/aluguel|condomin|iptu|agua|luz|energia|enel|sabesp|cedae|gas /.test(d)) return 'Moradia';
+  if (/escola|faculdade|curso|udemy|alura|mensalidade|material escolar|uniforme/.test(d)) return 'Educação';
+  if (/netflix|spotify|amazon|disney|youtube|hbo|globoplay|steam|playstation|xbox|cinema|teatro|show/.test(d)) return 'Lazer';
+  if (/roupa|moda|zara|hm|renner|riachuelo|c&a|reserva|forum|sapato|tênis|adidas|nike/.test(d)) return 'Vestuário';
+  if (/salario|salário|holerite|pagamento emp/.test(d)) return 'Salário';
+  if (/freelance|pix receb|transferencia receb|ted receb/.test(d)) return 'Freelance';
+  if (/invest|acao|fundo|tesouro|cdb|lci|lca|rend/.test(d)) return 'Investimentos';
+  if (/celular|telefone|internet|tim|claro|vivo|oi |net |sky /.test(d)) return 'Serviços';
+  return 'Outros';
+}
+
+function showImportPreview() {
+  const income = importedTxs.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
+  const expense = importedTxs.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
+
+  document.getElementById('import-summary').innerHTML = `
+    📄 <strong>${importedTxs.length}</strong> transações encontradas<br/>
+    ↑ Receitas: <span style="color:var(--income)">${fmt(income)}</span><br/>
+    ↓ Despesas: <span style="color:var(--expense)">${fmt(expense)}</span><br/>
+    ≡ Saldo: <span style="color:var(--accent2)">${fmt(income - expense)}</span>
+  `;
+
+  const EMOJI = { 'Moradia':'🏠','Alimentação':'🍔','Transporte':'🚗','Saúde':'💊','Educação':'📚','Lazer':'🎮','Vestuário':'👕','Serviços':'⚙️','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦' };
+
+  const preview = document.getElementById('import-preview');
+  preview.innerHTML = importedTxs.map((t, i) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:10px 12px;display:flex;align-items:center;gap:10px;border-left:3px solid ${t.type==='income'?'var(--income)':'var(--expense)'};">
+      <span style="font-size:1rem;">${EMOJI[t.category]||'💰'}</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-family:var(--font-body);font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.description}</div>
+        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);margin-top:2px;">${t.date} · ${t.category}</div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:${t.type==='income'?'var(--income)':'var(--expense)'};flex-shrink:0;">
+        ${t.type==='income'?'+':'−'} ${fmt(t.amount)}
+      </div>
+      <button onclick="removeImportTx(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:0.75rem;padding:2px 4px;" title="Remover">✕</button>
+    </div>
+  `).join('');
+
+  document.getElementById('confirm-import-btn').textContent = `Importar ${importedTxs.length} transações`;
+  document.getElementById('import-step-1').style.display = 'none';
+  document.getElementById('import-step-2').style.display = 'block';
+}
+
+window.removeImportTx = function(i) {
+  importedTxs.splice(i, 1);
+  if (!importedTxs.length) { resetImport(); return; }
+  showImportPreview();
+};
+
+window.confirmImport = async function() {
+  const btn = document.getElementById('confirm-import-btn');
+  btn.textContent = 'Importando...';
+  btn.disabled = true;
+
+  const bankId = document.getElementById('import-bank-sel').value;
+  const bankName = bankId ? banks.find(b => b.id === bankId)?.name || '' : '';
+
+  let count = 0;
+  for (const t of importedTxs) {
+    await addDoc(txCol(), {
+      uid: currentUser.uid,
+      type: t.type,
+      description: t.description,
+      amount: t.amount,
+      date: t.date,
+      category: t.category,
+      bankId,
+      bankName,
+      imported: true,
+      createdAt: Date.now()
+    });
+    count++;
+  }
+
+  await refreshAll();
+
+  document.getElementById('import-done-msg').textContent = `${count} transações importadas com sucesso!`;
+  document.getElementById('import-step-2').style.display = 'none';
+  document.getElementById('import-step-3').style.display = 'block';
+};
 </script>
 </body>
 </html>
