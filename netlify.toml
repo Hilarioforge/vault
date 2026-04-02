@@ -1,12 +1,12 @@
 [build]
   publish = "."
 
-[context.production.environment]
+[build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
 ```
 
-Depois faz o commit e push desse arquivo:
+Salva, faz commit e push:
 ```
 git add netlify.toml
-git commit -m "disable secrets scanner"
+git commit -m "fix toml syntax"
 git push
