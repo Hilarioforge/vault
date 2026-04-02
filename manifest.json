@@ -1,0 +1,22 @@
+{
+  "name": "VAULT — Controle Financeiro",
+  "short_name": "VAULT",
+  "description": "Controle financeiro pessoal dark e tecnológico",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070710",
+  "theme_color": "#0a0a0f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/070710/00f5c4?text=V",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/070710/00f5c4?text=V",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
