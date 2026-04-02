@@ -1040,27 +1040,36 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <div class="section-title">Resumo do Mês</div>
+    <div class="section-title">Movimentação do Mês</div>
     <div class="summary-grid">
       <div class="summary-card income">
-        <div class="summary-label">Receitas</div>
+        <div class="summary-label">↑ Entradas</div>
         <div class="summary-value income" id="dash-income">R$ 0,00</div>
       </div>
       <div class="summary-card expense">
-        <div class="summary-label">Despesas</div>
+        <div class="summary-label">↓ Saídas</div>
         <div class="summary-value expense" id="dash-expense">R$ 0,00</div>
       </div>
       <div class="summary-card balance full-width">
-        <div class="summary-label">Saldo do Mês</div>
+        <div class="summary-label">≡ Resultado do Mês (entradas − saídas)</div>
         <div class="summary-value balance" id="dash-balance">R$ 0,00</div>
-      </div>
-      <div class="summary-card banks full-width">
-        <div class="summary-label">💳 Total em Carteira (todos os bancos)</div>
-        <div class="summary-value banks" id="dash-total-banks">R$ 0,00</div>
       </div>
     </div>
 
-    <div class="section-title">Saúde Financeira</div>
+    <div class="section-title">Saldo por Banco</div>
+    <div id="dash-banks-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+      <div class="empty-state" style="padding:20px;">
+        <div class="empty-icon" style="font-size:1.5rem;">🏦</div>
+        Nenhum banco cadastrado ainda
+      </div>
+    </div>
+    <!-- total -->
+    <div class="summary-card banks" style="margin-bottom:24px;">
+      <div class="summary-label">💳 Saldo Total em Carteira</div>
+      <div class="summary-value banks" id="dash-total-banks">R$ 0,00</div>
+    </div>
+
+    <div class="section-title">Saúde Financeira do Mês</div>
     <div class="score-ring-container">
       <div class="score-ring">
         <svg viewBox="0 0 140 140">
@@ -1486,29 +1495,47 @@ function monthTxs(m, y) {
 // ─── DASHBOARD ───
 function renderDashboard() {
   const txs = monthTxs(currentMonth, currentYear);
-  const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const income  = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const balance = income - expense;
+  const result  = income - expense; // resultado do mês (entradas - saídas)
 
-  document.getElementById('dash-income').textContent = fmt(income);
+  // ── Movimentação do mês ──
+  document.getElementById('dash-income').textContent  = fmt(income);
   document.getElementById('dash-expense').textContent = fmt(expense);
-  document.getElementById('dash-balance').textContent = fmt(balance);
-  document.getElementById('dash-balance').style.color = balance >= 0 ? 'var(--accent2)' : 'var(--expense)';
+  document.getElementById('dash-balance').textContent = fmt(result);
+  document.getElementById('dash-balance').style.color = result >= 0 ? 'var(--accent2)' : 'var(--expense)';
 
-  // Total em carteira (soma dos bancos cadastrados)
+  // ── Saldo por banco (saldo real informado pelo usuário) ──
   const totalBanks = banks.reduce((s, b) => s + (b.balance || 0), 0);
-  const dbEl = document.getElementById('dash-total-banks');
-  if (dbEl) dbEl.textContent = fmt(totalBanks);
+  document.getElementById('dash-total-banks').textContent = fmt(totalBanks);
 
-  // Score ring
-  const pct = income > 0 ? Math.max(0, Math.min(100, Math.round((balance / income) * 100))) : 0;
+  const bankListEl = document.getElementById('dash-banks-list');
+  if (!banks.length) {
+    bankListEl.innerHTML = `<div class="empty-state" style="padding:16px;">
+      <div class="empty-icon" style="font-size:1.5rem;">🏦</div>
+      Nenhum banco cadastrado — vá em <strong>Bancos</strong> para adicionar
+    </div>`;
+  } else {
+    bankListEl.innerHTML = banks.map(b => `
+      <div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ${b.color};border-radius:4px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:${b.color};flex-shrink:0;box-shadow:0 0 8px ${b.color}66;"></div>
+          <div style="font-family:var(--font-body);font-size:0.95rem;font-weight:600;color:var(--text);">${b.name}</div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.95rem;font-weight:700;color:${b.balance >= 0 ? 'var(--accent4)' : 'var(--expense)'};">${fmt(b.balance)}</div>
+      </div>
+    `).join('');
+  }
+
+  // ── Score ring (% poupada no mês) ──
+  const pct = income > 0 ? Math.max(0, Math.min(100, Math.round((result / income) * 100))) : 0;
   document.getElementById('score-pct').textContent = pct + '%';
   const circ = 2 * Math.PI * 58;
   const offset = circ - (circ * pct / 100);
   document.getElementById('score-circle').style.strokeDashoffset = offset;
   document.getElementById('score-circle').style.stroke = pct > 50 ? '#00f5c4' : pct > 20 ? '#ffd166' : '#ff4d6d';
 
-  // Categories
+  // ── Gastos por categoria do mês ──
   const cats = {};
   txs.filter(t => t.type === 'expense').forEach(t => {
     cats[t.category] = (cats[t.category] || 0) + t.amount;
@@ -1533,7 +1560,6 @@ function renderDashboard() {
     `).join('');
   }
 
-  // Bar chart (6 months)
   renderBarChart();
 }
 
