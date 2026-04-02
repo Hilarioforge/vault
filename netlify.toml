@@ -3,10 +3,3 @@
 
 [build.environment]
   SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
-```
-
-Salva, faz commit e push:
-```
-git add netlify.toml
-git commit -m "fix toml syntax"
-git push
