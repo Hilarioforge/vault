@@ -1056,11 +1056,7 @@
         <div class="summary-label">≡ Resultado do Mês (entradas − saídas)</div>
         <div class="summary-value balance" id="dash-balance">R$ 0,00</div>
       </div>
-      <div class="summary-card full-width" style="border-top:2px solid var(--accent4);">
-        <div class="summary-label" style="color:var(--accent4);">📈 Saldo Acumulado (todas as transações)</div>
-        <div class="summary-value" id="dash-accumulated" style="color:var(--accent4);">R$ 0,00</div>
-        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);margin-top:6px;" id="dash-accumulated-sub">Total histórico: entradas − saídas</div>
-      </div>
+
     </div>
 
     <div class="section-title">Saldo por Banco</div>
@@ -1202,6 +1198,13 @@
     </div>
 
     <div class="settings-section">
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label" style="color:var(--expense);">⚠️ Apagar todos os dados</div>
+          <div class="settings-item-sub">Remove todas as transações, bancos e metas</div>
+        </div>
+        <button class="icon-btn delete" onclick="confirmDeleteAll()" style="width:auto;padding:6px 14px;font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.1em;border-color:var(--expense);color:var(--expense);">APAGAR</button>
+      </div>
       <div class="settings-item">
         <div>
           <div class="settings-item-label" style="color:var(--expense);">Sair da conta</div>
@@ -1408,6 +1411,27 @@
   </div>
 </div>
 
+<!-- MODAL: DELETE ALL -->
+<div class="modal-overlay" id="delete-all-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--expense);">⚠️ Apagar Todos os Dados</div>
+    <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text2);line-height:1.8;margin-bottom:20px;">
+      Isso irá apagar <strong style="color:var(--expense);">permanentemente</strong> todas as suas:<br/>
+      • Transações<br/>
+      • Contas bancárias<br/>
+      • Metas financeiras<br/><br/>
+      <span style="color:var(--expense);">Esta ação não pode ser desfeita.</span>
+    </div>
+    <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text3);margin-bottom:8px;letter-spacing:0.1em;">Digite <strong style="color:var(--expense);">APAGAR</strong> para confirmar:</div>
+    <input type="text" id="delete-confirm-input" placeholder="APAGAR"
+      style="width:100%;padding:12px 14px;background:var(--bg2);border:1px solid var(--expense);border-radius:3px;color:var(--expense);font-family:var(--font-mono);font-size:0.9rem;outline:none;letter-spacing:0.1em;margin-bottom:20px;" />
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('delete-all-modal').classList.remove('open');document.getElementById('delete-confirm-input').value='';">Cancelar</button>
+      <button onclick="executeDeleteAll()" style="padding:14px;background:var(--expense);border:none;border-radius:3px;color:#fff;font-family:var(--font-body);font-size:0.9rem;font-weight:700;cursor:pointer;letter-spacing:0.05em;">APAGAR TUDO</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: UPDATE GOAL SAVINGS -->
 <div class="modal-overlay" id="update-goal-modal">
   <div class="modal">
@@ -1569,23 +1593,11 @@ function renderDashboard() {
   const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const result  = income - expense; // resultado do mês (entradas - saídas)
 
-  // ── Saldo acumulado HISTÓRICO (todas as transações, todos os meses) ──
-  const totalIncomeAll  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const totalExpenseAll = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const accumulated = totalIncomeAll - totalExpenseAll;
-
   // ── Movimentação do mês ──
   document.getElementById('dash-income').textContent  = fmt(income);
   document.getElementById('dash-expense').textContent = fmt(expense);
   document.getElementById('dash-balance').textContent = fmt(result);
   document.getElementById('dash-balance').style.color = result >= 0 ? 'var(--accent2)' : 'var(--expense)';
-
-  // ── Saldo Acumulado ──
-  const accEl = document.getElementById('dash-accumulated');
-  accEl.textContent = fmt(accumulated);
-  accEl.style.color = accumulated >= 0 ? 'var(--accent4)' : 'var(--expense)';
-  document.getElementById('dash-accumulated-sub').textContent =
-    `↑ ${fmt(totalIncomeAll)} entradas  ↓ ${fmt(totalExpenseAll)} saídas (histórico completo)`;
 
   // ── Saldo por banco (saldo real informado pelo usuário) ──
   const totalBanks = banks.reduce((s, b) => s + (b.balance || 0), 0);
@@ -1934,6 +1946,46 @@ window.saveUpdateGoal = async function() {
   document.getElementById('update-goal-modal').classList.remove('open');
   await refreshAll();
   showToast('Meta atualizada!');
+};
+
+// ─── DELETE ALL DATA ───
+window.confirmDeleteAll = function() {
+  document.getElementById('delete-confirm-input').value = '';
+  document.getElementById('delete-all-modal').classList.add('open');
+};
+
+window.executeDeleteAll = async function() {
+  const val = document.getElementById('delete-confirm-input').value.trim().toUpperCase();
+  if (val !== 'APAGAR') {
+    showToast('Digite APAGAR para confirmar');
+    return;
+  }
+
+  const btn = document.querySelector('#delete-all-modal .modal-actions button:last-child');
+  btn.textContent = 'Apagando...';
+  btn.disabled = true;
+
+  try {
+    // Deletar todas as transações do usuário
+    const txSnap = await getDocs(query(txCol(), where('uid', '==', currentUser.uid)));
+    for (const d of txSnap.docs) await deleteDoc(doc(db, 'vault_transactions', d.id));
+
+    // Deletar todos os bancos
+    const bkSnap = await getDocs(query(banksCol(), where('uid', '==', currentUser.uid)));
+    for (const d of bkSnap.docs) await deleteDoc(doc(db, 'vault_banks', d.id));
+
+    // Deletar todas as metas
+    const glSnap = await getDocs(query(goalsCol(), where('uid', '==', currentUser.uid)));
+    for (const d of glSnap.docs) await deleteDoc(doc(db, 'vault_goals', d.id));
+
+    document.getElementById('delete-all-modal').classList.remove('open');
+    await refreshAll();
+    showToast('Todos os dados foram apagados');
+  } catch(e) {
+    showToast('Erro ao apagar dados');
+    btn.textContent = 'APAGAR TUDO';
+    btn.disabled = false;
+  }
 };
 
 // ─── TOAST ───
