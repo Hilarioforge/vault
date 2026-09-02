@@ -7,10 +7,10 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Caixa do Gordinho" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Caixa do Gordinho — Controle Financeiro</title>
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/png" href="vault-icon-192.png" />
-  <link rel="apple-touch-icon" href="vault-icon-192.png" />
+  <title>Caixa do Gordinho — Gestão da Churrascaria</title>
+  <link rel="manifest" href="manifest.json?v=3" />
+  <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
+  <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
 
   <style>
@@ -1001,6 +1001,36 @@
       .topnav { max-width: 600px; margin: 0 auto; left: 50%; transform: translateX(-50%); width: 100%; }
       .bottom-nav { max-width: 600px; margin: 0 auto; left: 50%; transform: translateX(-50%); }
     }
+
+    /* Identidade e legibilidade da gestão da churrascaria */
+    body { font-weight: 500; }
+    .section-title { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.18em; color: var(--text2); }
+    .summary-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; color: var(--text2); }
+    .month-label, .nav-btn, .chip, .form-field label, .auth-field label, .settings-item-label, .settings-item-sub, .tx-meta, .cat-name, .tx-desc, .bank-name { font-weight: 700; }
+    .form-field label { font-size: 0.7rem; letter-spacing: 0.12em; color: var(--text2); }
+    .modal-title { font-size: 0.92rem; font-weight: 900; letter-spacing: 0.12em; }
+    .settings-item-label { font-size: 1rem; }
+    .business-context {
+      margin: -4px 0 22px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      background: rgba(255,212,59,0.04);
+      color: var(--text2);
+      font-size: 0.82rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .metric-note {
+      margin: -8px 0 24px;
+      text-align: center;
+      color: var(--text2);
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -1010,7 +1040,7 @@
   <div class="auth-card">
     <div class="auth-logo">
       <h1>CAIXA DO GORDINHO</h1>
-      <p>Sistema de Controle Financeiro</p>
+      <p>Gestão Financeira da Churrascaria</p>
     </div>
     <div class="auth-field">
       <label>Usuário</label>
@@ -1043,27 +1073,33 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <div class="section-title">Movimentação do Mês</div>
+    <div class="business-context">🍖 Acompanhe recebimentos, despesas, caixa disponível e o resultado financeiro da churrascaria.</div>
+
+    <div class="section-title">Resumo Financeiro do Mês</div>
     <div class="summary-grid">
       <div class="summary-card income">
-        <div class="summary-label">↑ Entradas</div>
+        <div class="summary-label">↑ Recebimentos</div>
         <div class="summary-value income" id="dash-income">R$ 0,00</div>
       </div>
       <div class="summary-card expense">
-        <div class="summary-label">↓ Saídas</div>
+        <div class="summary-label">↓ Despesas Operacionais</div>
         <div class="summary-value expense" id="dash-expense">R$ 0,00</div>
       </div>
+      <div class="summary-card balance full-width">
+        <div class="summary-label">📈 Resultado de Caixa do Mês</div>
+        <div class="summary-value balance" id="dash-result">R$ 0,00</div>
+      </div>
       <div class="summary-card banks full-width">
-        <div class="summary-label">💳 Saldo Total em Carteira</div>
+        <div class="summary-label">💳 Disponível em Contas e Caixa</div>
         <div class="summary-value banks" id="dash-balance">R$ 0,00</div>
       </div>
 
     </div>
 
-    <div class="section-title">Saldo por Banco</div>
+    <div class="section-title">Saldo por Conta e Caixa</div>
     <div id="dash-banks-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;"></div>
 
-    <div class="section-title">Saúde Financeira do Mês</div>
+    <div class="section-title">Resultado do Mês sobre Recebimentos</div>
     <div class="score-ring-container">
       <div class="score-ring">
         <svg viewBox="0 0 140 140">
@@ -1074,12 +1110,13 @@
         </svg>
         <div class="score-center">
           <div class="score-pct" id="score-pct">—%</div>
-          <div class="score-sub">POUPANÇA</div>
+          <div class="score-sub">RESULTADO</div>
         </div>
       </div>
     </div>
+    <div class="metric-note">Recebimentos menos despesas, dividido pelos recebimentos registrados no mês.</div>
 
-    <div class="section-title">Gastos por Categoria</div>
+    <div class="section-title">Despesas por Categoria</div>
     <div class="category-list" id="category-list">
       <div class="empty-state">
         <div class="empty-icon">📊</div>
@@ -1087,7 +1124,7 @@
       </div>
     </div>
 
-    <div class="section-title">Histórico (6 meses)</div>
+    <div class="section-title">Recebimentos e Despesas (6 meses)</div>
     <div class="chart-container">
       <div class="bar-chart" id="bar-chart"></div>
     </div>
@@ -1104,61 +1141,61 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
       <button class="add-btn" style="margin-bottom:0;" onclick="openTxModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Nova Transação
+        Novo Lançamento
       </button>
       <button class="add-btn" style="margin-bottom:0;border-color:var(--accent2);color:var(--accent2);" onclick="openImportModal()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Importar Extrato
+        Importar Extrato Bancário
       </button>
     </div>
 
     <div class="filter-chips">
-      <div class="chip active" onclick="setFilter('all', this)">Todas</div>
-      <div class="chip" onclick="setFilter('income', this)">Receitas</div>
+      <div class="chip active" onclick="setFilter('all', this)">Todos</div>
+      <div class="chip" onclick="setFilter('income', this)">Recebimentos</div>
       <div class="chip" onclick="setFilter('expense', this)">Despesas</div>
     </div>
 
     <div class="transactions-list" id="tx-list">
       <div class="empty-state">
         <div class="empty-icon">💸</div>
-        Nenhuma transação
+        Nenhum lançamento no período
       </div>
     </div>
   </div>
 
   <!-- BANKS -->
   <div id="page-banks" class="page">
-    <div class="section-title">Meus Bancos</div>
+    <div class="section-title">Contas e Caixas da Empresa</div>
     <div class="summary-card banks" style="margin-bottom:24px;">
-      <div class="summary-label">Total em Carteira</div>
+      <div class="summary-label">Total Disponível</div>
       <div class="summary-value banks" id="total-banks">R$ 0,00</div>
     </div>
 
     <div class="banks-list" id="banks-list">
       <div class="empty-state">
         <div class="empty-icon">🏦</div>
-        Nenhum banco cadastrado
+        Nenhuma conta ou caixa cadastrada
       </div>
     </div>
 
     <button class="add-btn" onclick="openBankModal()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Adicionar Banco
+      Adicionar Conta ou Caixa
     </button>
   </div>
 
   <!-- GOALS -->
   <div id="page-goals" class="page">
-    <div class="section-title">Metas Financeiras</div>
+    <div class="section-title">Objetivos do Negócio</div>
     <div class="banks-list" id="goals-list">
       <div class="empty-state">
         <div class="empty-icon">🎯</div>
-        Nenhuma meta cadastrada
+        Nenhum objetivo cadastrado
       </div>
     </div>
     <button class="add-btn" onclick="openGoalModal()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Nova Meta
+      Novo Objetivo
     </button>
   </div>
 
@@ -1175,14 +1212,14 @@
       </div>
       <div class="settings-item">
         <div>
-          <div class="settings-item-label">Exportar transações (CSV)</div>
-          <div class="settings-item-sub">Baixar todas as transações em planilha</div>
+          <div class="settings-item-label">Exportar lançamentos (CSV)</div>
+          <div class="settings-item-sub">Baixar a movimentação financeira da churrascaria</div>
         </div>
         <button class="icon-btn" onclick="exportCSV()" title="Exportar CSV" style="width:auto;padding:6px 14px;font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.1em;">↓ CSV</button>
       </div>
       <div class="settings-item">
         <div>
-          <div class="settings-item-label">Resumo financeiro</div>
+          <div class="settings-item-label">Resumo geral da operação</div>
           <div class="settings-item-sub" id="settings-summary">—</div>
         </div>
       </div>
@@ -1192,7 +1229,7 @@
       <div class="settings-item">
         <div>
           <div class="settings-item-label" style="color:var(--expense);">⚠️ Apagar todos os dados</div>
-          <div class="settings-item-sub">Remove todas as transações, bancos e metas</div>
+          <div class="settings-item-sub">Remove lançamentos, contas, caixas e objetivos</div>
         </div>
         <button class="icon-btn delete" onclick="confirmDeleteAll()" style="width:auto;padding:6px 14px;font-size:0.7rem;font-family:var(--font-mono);letter-spacing:0.1em;border-color:var(--expense);color:var(--expense);">APAGAR</button>
       </div>
@@ -1206,7 +1243,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      CAIXA DO GORDINHO v1.1 — SISTEMA DE CONTROLE FINANCEIRO
+      CAIXA DO GORDINHO v1.2 — GESTÃO FINANCEIRA DA CHURRASCARIA
     </div>
   </div>
 
@@ -1214,7 +1251,7 @@
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="showPage('dashboard', this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      Dashboard
+      Resumo
     </button>
     <button class="nav-btn" onclick="showPage('transactions', this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
@@ -1222,11 +1259,11 @@
     </button>
     <button class="nav-btn" onclick="showPage('banks', this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-      Bancos
+      Contas
     </button>
     <button class="nav-btn" onclick="showPage('goals', this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-      Metas
+      Objetivos
     </button>
     <button class="nav-btn" onclick="showPage('settings', this)">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1238,14 +1275,14 @@
 <!-- MODAL: TRANSACTION -->
 <div class="modal-overlay" id="tx-modal">
   <div class="modal">
-    <div class="modal-title" id="tx-modal-title">Nova Transação</div>
+    <div class="modal-title" id="tx-modal-title">Novo Lançamento</div>
     <div class="type-toggle">
-      <button class="type-btn income active" id="type-income-btn" onclick="setType('income')">↑ Receita</button>
+      <button class="type-btn income active" id="type-income-btn" onclick="setType('income')">↑ Recebimentos</button>
       <button class="type-btn expense" id="type-expense-btn" onclick="setType('expense')">↓ Despesa</button>
     </div>
     <div class="form-field">
       <label>Descrição</label>
-      <input type="text" id="tx-desc" placeholder="Ex: Salário, Aluguel..." />
+      <input type="text" id="tx-desc" placeholder="Ex: compra de carnes, conta de energia..." />
     </div>
     <div class="form-field">
       <label>Valor (R$)</label>
@@ -1256,24 +1293,26 @@
       <input type="date" id="tx-date" />
     </div>
     <div class="form-field">
-      <label>Categoria</label>
+      <label>Categoria / Centro de Custo</label>
       <select id="tx-category">
-        <option value="Moradia">🏠 Moradia</option>
-        <option value="Alimentação">🍔 Alimentação</option>
-        <option value="Transporte">🚗 Transporte</option>
-        <option value="Saúde">💊 Saúde</option>
-        <option value="Educação">📚 Educação</option>
-        <option value="Lazer">🎮 Lazer</option>
-        <option value="Vestuário">👕 Vestuário</option>
-        <option value="Serviços">⚙️ Serviços</option>
-        <option value="Salário">💼 Salário</option>
-        <option value="Freelance">💻 Freelance</option>
-        <option value="Investimentos">📈 Investimentos</option>
-        <option value="Outros">📦 Outros</option>
+        <option value="Carnes e Proteínas">🥩 Carnes e Proteínas</option>
+        <option value="Bebidas">🥤 Bebidas</option>
+        <option value="Hortifruti">🥬 Hortifruti</option>
+        <option value="Mercearia e Insumos">📦 Mercearia e Insumos</option>
+        <option value="Folha e Equipe">👥 Folha e Equipe</option>
+        <option value="Impostos e Taxas">🧾 Impostos e Taxas</option>
+        <option value="Aluguel e Estrutura">🏠 Aluguel e Estrutura</option>
+        <option value="Água, Energia e Gás">⚡ Água, Energia e Gás</option>
+        <option value="Manutenção">🔧 Manutenção</option>
+        <option value="Marketing">📣 Marketing</option>
+        <option value="Taxas de Delivery">🛵 Taxas de Delivery</option>
+        <option value="Limpeza e Higiene">🧼 Limpeza e Higiene</option>
+        <option value="Transporte e Logística">🚚 Transporte e Logística</option>
+        <option value="Outras Despesas">📋 Outras Despesas</option>
       </select>
     </div>
     <div class="form-field">
-      <label>Banco (opcional)</label>
+      <label>Conta ou Caixa (opcional)</label>
       <select id="tx-bank">
         <option value="">— Nenhum —</option>
       </select>
@@ -1288,10 +1327,10 @@
 <!-- MODAL: BANK -->
 <div class="modal-overlay" id="bank-modal">
   <div class="modal">
-    <div class="modal-title" id="bank-modal-title">Adicionar Banco</div>
+    <div class="modal-title" id="bank-modal-title">Adicionar Conta ou Caixa</div>
     <div class="form-field">
-      <label>Nome do Banco / Conta</label>
-      <input type="text" id="bank-name" placeholder="Ex: Nubank, Bradesco..." />
+      <label>Nome da Conta ou Caixa</label>
+      <input type="text" id="bank-name" placeholder="Ex: Caixa principal, Banco, Maquininha..." />
     </div>
     <div class="form-field">
       <label>Saldo Atual (R$)</label>
@@ -1300,10 +1339,10 @@
     <div class="form-field">
       <label>Cor</label>
       <select id="bank-color">
-        <option value="#ffd43b">Verde Neon</option>
-        <option value="#f0a500">Roxo</option>
+        <option value="#ffd43b">Amarelo</option>
+        <option value="#f0a500">Dourado</option>
         <option value="#ef4b52">Vermelho</option>
-        <option value="#fff2b2">Amarelo</option>
+        <option value="#fff2b2">Creme</option>
         <option value="#3b82f6">Azul</option>
         <option value="#f97316">Laranja</option>
         <option value="#ec4899">Rosa</option>
@@ -1319,17 +1358,17 @@
 <!-- MODAL: GOAL -->
 <div class="modal-overlay" id="goal-modal">
   <div class="modal">
-    <div class="modal-title">Nova Meta</div>
+    <div class="modal-title">Novo Objetivo do Negócio</div>
     <div class="form-field">
-      <label>Nome da Meta</label>
-      <input type="text" id="goal-name" placeholder="Ex: Viagem, Carro novo..." />
+      <label>Nome do Objetivo</label>
+      <input type="text" id="goal-name" placeholder="Ex: Reforma, nova churrasqueira, capital de giro..." />
     </div>
     <div class="form-field">
-      <label>Valor Total (R$)</label>
+      <label>Valor Necessário (R$)</label>
       <input type="number" id="goal-target" placeholder="0,00" step="0.01" min="0" />
     </div>
     <div class="form-field">
-      <label>Já Economizei (R$)</label>
+      <label>Valor Já Reservado (R$)</label>
       <input type="number" id="goal-saved" placeholder="0,00" step="0.01" min="0" />
     </div>
     <div class="form-field">
@@ -1361,7 +1400,7 @@
       </div>
       <input type="file" id="file-input" accept=".ofx,.csv,.txt" style="display:none;" onchange="handleFileSelect(this)" />
       <div class="form-field">
-        <label>Vincular ao Banco</label>
+        <label>Vincular à Conta ou Caixa</label>
         <select id="import-bank-sel"><option value="">— Nenhum —</option></select>
       </div>
       <button class="btn-cancel" style="width:100%;margin-top:8px;" onclick="closeImportModal()">Cancelar</button>
@@ -1369,7 +1408,7 @@
 
     <div id="import-step-2" style="display:none;">
       <div id="import-summary" style="background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:14px 16px;margin-bottom:16px;font-family:var(--font-mono);font-size:0.7rem;color:var(--text2);line-height:1.8;"></div>
-      <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text3);margin-bottom:10px;letter-spacing:0.1em;">PRÉVIA — clique ✕ para remover</div>
+      <div style="font-family:var(--font-mono);font-size:0.7rem;font-weight:700;color:var(--text2);margin-bottom:10px;">Confira as categorias sugeridas. Altere o que precisar antes de importar ou clique ✕ para remover.</div>
       <div id="import-preview" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div>
       <div class="modal-actions">
         <button class="btn-cancel" onclick="resetImport()">← Voltar</button>
@@ -1389,7 +1428,7 @@
 <!-- MODAL: EDIT BANK BALANCE -->
 <div class="modal-overlay" id="edit-bank-modal">
   <div class="modal">
-    <div class="modal-title">Editar Saldo</div>
+    <div class="modal-title">Atualizar Saldo da Conta ou Caixa</div>
     <input type="hidden" id="edit-bank-id" />
     <div class="form-field">
       <label>Novo Saldo (R$)</label>
@@ -1408,9 +1447,9 @@
     <div class="modal-title" style="color:var(--expense);">⚠️ Apagar Todos os Dados</div>
     <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text2);line-height:1.8;margin-bottom:20px;">
       Isso irá apagar <strong style="color:var(--expense);">permanentemente</strong> todas as suas:<br/>
-      • Transações<br/>
-      • Contas bancárias<br/>
-      • Metas financeiras<br/><br/>
+      • Lançamentos financeiros<br/>
+      • Contas e caixas<br/>
+      • Objetivos do negócio<br/><br/>
       <span style="color:var(--expense);">Esta ação não pode ser desfeita.</span>
     </div>
     <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text3);margin-bottom:8px;letter-spacing:0.1em;">Digite <strong style="color:var(--expense);">APAGAR</strong> para confirmar:</div>
@@ -1426,10 +1465,10 @@
 <!-- MODAL: UPDATE GOAL SAVINGS -->
 <div class="modal-overlay" id="update-goal-modal">
   <div class="modal">
-    <div class="modal-title">Atualizar Poupança</div>
+    <div class="modal-title">Atualizar Valor Reservado</div>
     <input type="hidden" id="update-goal-id" />
     <div class="form-field">
-      <label>Valor já economizado (R$)</label>
+      <label>Valor reservado até agora (R$)</label>
       <input type="number" id="update-goal-saved" placeholder="0,00" step="0.01" min="0" />
     </div>
     <div class="modal-actions">
@@ -1587,6 +1626,9 @@ function renderDashboard() {
   // ── Movimentação do mês ──
   document.getElementById('dash-income').textContent  = fmt(income);
   document.getElementById('dash-expense').textContent = fmt(expense);
+  const resultEl = document.getElementById('dash-result');
+  resultEl.textContent = fmt(result);
+  resultEl.style.color = result >= 0 ? 'var(--accent)' : 'var(--expense)';
 
   // ── Saldo Total em Carteira (soma de todos os bancos) ──
   const totalBanks = banks.reduce((s, b) => s + (b.balance || 0), 0);
@@ -1599,7 +1641,7 @@ function renderDashboard() {
   if (!banks.length) {
     bankListEl.innerHTML = `<div class="empty-state" style="padding:16px;">
       <div class="empty-icon" style="font-size:1.5rem;">🏦</div>
-      Nenhum banco cadastrado — vá em <strong>Bancos</strong> para adicionar
+      Nenhuma conta ou caixa cadastrada — vá em <strong>Contas</strong> para adicionar
     </div>`;
   } else {
     bankListEl.innerHTML = banks.map(b => `
@@ -1613,8 +1655,8 @@ function renderDashboard() {
     `).join('');
   }
 
-  // ── Score ring (% poupada no mês) ──
-  const pct = income > 0 ? Math.round((result / income) * 100) : (expense > 0 ? -100 : 0);
+  // ── Margem operacional do mês ──
+  const pct = income > 0 ? Math.round((result / income) * 100) : 0;
   const pctDisplay = pct > 0 ? `+${pct}%` : `${pct}%`;
   const pctClamped = Math.max(0, Math.min(100, pct)); // só para o visual do ring
   document.getElementById('score-pct').textContent = pctDisplay;
@@ -1696,14 +1738,17 @@ function renderTransactions() {
 
   const el = document.getElementById('tx-list');
   if (!txs.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💸</div>Nenhuma transação no período</div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">💸</div>Nenhum lançamento no período</div>';
     return;
   }
 
   const EMOJI = {
-    'Moradia':'🏠','Alimentação':'🍔','Transporte':'🚗','Saúde':'💊','Educação':'📚',
-    'Lazer':'🎮','Vestuário':'👕','Serviços':'⚙️','Salário':'💼','Freelance':'💻',
-    'Investimentos':'📈','Outros':'📦'
+    'Faturamento':'💵','Vendas no Salão':'🍽️','Delivery':'🛵','Venda de Bebidas':'🥤','Eventos e Reservas':'🎉','Outros Recebimentos':'💰',
+    'Carnes e Proteínas':'🥩','Bebidas':'🥤','Hortifruti':'🥬','Mercearia e Insumos':'📦','Folha e Equipe':'👥',
+    'Impostos e Taxas':'🧾','Aluguel e Estrutura':'🏠','Água, Energia e Gás':'⚡','Manutenção':'🔧','Marketing':'📣',
+    'Taxas de Delivery':'🛵','Limpeza e Higiene':'🧼','Transporte e Logística':'🚚','Outras Despesas':'📋',
+    'Moradia':'🏠','Alimentação':'🍔','Transporte':'🚗','Saúde':'💊','Educação':'📚','Lazer':'🎮','Vestuário':'👕',
+    'Serviços':'⚙️','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦'
   };
 
   el.innerHTML = txs.map(t => {
@@ -1732,14 +1777,48 @@ window.setFilter = function(f, el) {
 };
 
 // ─── TX MODAL ───
+const BUSINESS_CATEGORIES = {
+  income: [
+    ['Faturamento','💵 Faturamento / Vendas Gerais'],
+    ['Vendas no Salão','🍽️ Vendas no Salão'],
+    ['Delivery','🛵 Delivery'],
+    ['Venda de Bebidas','🥤 Venda de Bebidas'],
+    ['Eventos e Reservas','🎉 Eventos e Reservas'],
+    ['Outros Recebimentos','💰 Outros Recebimentos']
+  ],
+  expense: [
+    ['Carnes e Proteínas','🥩 Carnes e Proteínas'],
+    ['Bebidas','🥤 Bebidas'],
+    ['Hortifruti','🥬 Hortifruti'],
+    ['Mercearia e Insumos','📦 Mercearia e Insumos'],
+    ['Folha e Equipe','👥 Folha e Equipe'],
+    ['Impostos e Taxas','🧾 Impostos e Taxas'],
+    ['Aluguel e Estrutura','🏠 Aluguel e Estrutura'],
+    ['Água, Energia e Gás','⚡ Água, Energia e Gás'],
+    ['Manutenção','🔧 Manutenção'],
+    ['Marketing','📣 Marketing'],
+    ['Taxas de Delivery','🛵 Taxas de Delivery'],
+    ['Limpeza e Higiene','🧼 Limpeza e Higiene'],
+    ['Transporte e Logística','🚚 Transporte e Logística'],
+    ['Outras Despesas','📋 Outras Despesas']
+  ]
+};
+
+function updateCategoryOptions(type) {
+  const select = document.getElementById('tx-category');
+  select.innerHTML = BUSINESS_CATEGORIES[type]
+    .map(([value, label]) => `<option value="${value}">${label}</option>`)
+    .join('');
+}
+
 window.openTxModal = function() {
   document.getElementById('tx-modal').classList.add('open');
-  document.getElementById('tx-modal-title').textContent = 'Nova Transação';
+  document.getElementById('tx-modal-title').textContent = 'Novo Lançamento';
   document.getElementById('tx-desc').value = '';
   document.getElementById('tx-amount').value = '';
   document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('tx-category').value = 'Alimentação';
   setType('expense');
+  document.getElementById('tx-category').value = 'Carnes e Proteínas';
   // populate bank select
   const sel = document.getElementById('tx-bank');
   sel.innerHTML = '<option value="">— Nenhum —</option>' +
@@ -1755,6 +1834,10 @@ window.setType = function(t) {
   txType = t;
   document.getElementById('type-income-btn').classList.toggle('active', t === 'income');
   document.getElementById('type-expense-btn').classList.toggle('active', t === 'expense');
+  updateCategoryOptions(t);
+  document.getElementById('tx-desc').placeholder = t === 'income'
+    ? 'Ex: vendas no salão, delivery, evento...'
+    : 'Ex: compra de carnes, energia, fornecedor...';
 };
 
 // ─── RENDER ALL (garante que todas as telas ficam sincronizadas) ───
@@ -1791,11 +1874,11 @@ window.saveTx = async function() {
   await updateBankBalance(bankId, amount, txType);
   closeTxModal();
   await refreshAll();
-  showToast('Transação salva!');
+  showToast('Lançamento salvo!');
 };
 
 window.deleteTx = async function(id) {
-  if (!confirm('Excluir esta transação?')) return;
+  if (!confirm('Excluir este lançamento?')) return;
   // Reverter o saldo do banco antes de deletar
   const tx = transactions.find(t => t.id === id);
   if (tx && tx.bankId) {
@@ -1814,7 +1897,7 @@ function renderBanks() {
 
   const el = document.getElementById('banks-list');
   if (!banks.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏦</div>Nenhum banco cadastrado</div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏦</div>Nenhuma conta ou caixa cadastrada</div>';
     return;
   }
   el.innerHTML = banks.map(b => `
@@ -1850,11 +1933,11 @@ window.saveBank = async function() {
   const name = document.getElementById('bank-name').value.trim();
   const balance = parseFloat(document.getElementById('bank-balance').value) || 0;
   const color = document.getElementById('bank-color').value;
-  if (!name) { showToast('Informe o nome do banco'); return; }
+  if (!name) { showToast('Informe o nome da conta ou caixa'); return; }
   await addDoc(banksCol(), { uid: currentUser.uid, name, balance, color, createdAt: Date.now() });
   closeBankModal();
   await refreshAll();
-  showToast('Banco adicionado!');
+  showToast('Conta ou caixa adicionada!');
 };
 
 window.openEditBank = function(id, bal) {
@@ -1872,17 +1955,17 @@ window.saveEditBank = async function() {
 };
 
 window.deleteBank = async function(id) {
-  if (!confirm('Excluir este banco?')) return;
+  if (!confirm('Excluir esta conta ou caixa?')) return;
   await deleteDoc(doc(db, 'vault_banks', id));
   await refreshAll();
-  showToast('Banco removido');
+  showToast('Conta ou caixa removida');
 };
 
 // ─── GOALS ───
 function renderGoals() {
   const el = document.getElementById('goals-list');
   if (!goals.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div>Nenhuma meta cadastrada</div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div>Nenhum objetivo cadastrado</div>';
     return;
   }
   el.innerHTML = goals.map(g => {
@@ -1894,7 +1977,7 @@ function renderGoals() {
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div class="bank-name">${g.name}</div>
           <div style="display:flex;gap:6px;">
-            <button class="icon-btn" onclick="openUpdateGoal('${g.id}', ${g.saved || 0})" title="Atualizar poupança">+</button>
+            <button class="icon-btn" onclick="openUpdateGoal('${g.id}', ${g.saved || 0})" title="Atualizar valor reservado">+</button>
             <button class="icon-btn delete" onclick="deleteGoal('${g.id}')">✕</button>
           </div>
         </div>
@@ -1935,14 +2018,14 @@ window.saveGoal = async function() {
   await addDoc(goalsCol(), { uid: currentUser.uid, name, target, saved, deadline, createdAt: Date.now() });
   closeGoalModal();
   await refreshAll();
-  showToast('Meta criada!');
+  showToast('Objetivo criado!');
 };
 
 window.deleteGoal = async function(id) {
-  if (!confirm('Excluir esta meta?')) return;
+  if (!confirm('Excluir este objetivo?')) return;
   await deleteDoc(doc(db, 'vault_goals', id));
   await refreshAll();
-  showToast('Meta removida');
+  showToast('Objetivo removido');
 };
 
 window.openUpdateGoal = function(id, currentSaved) {
@@ -1957,7 +2040,7 @@ window.saveUpdateGoal = async function() {
   await updateDoc(doc(db, 'vault_goals', id), { saved });
   document.getElementById('update-goal-modal').classList.remove('open');
   await refreshAll();
-  showToast('Meta atualizada!');
+  showToast('Objetivo atualizado!');
 };
 
 // ─── DELETE ALL DATA ───
@@ -2016,17 +2099,17 @@ function renderSettings() {
   const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const sumEl = document.getElementById('settings-summary');
-  if (sumEl) sumEl.textContent = `${transactions.length} transações · Entradas ${fmt(totalIncome)} · Saídas ${fmt(totalExpense)}`;
+  if (sumEl) sumEl.textContent = `${transactions.length} lançamentos · Recebimentos ${fmt(totalIncome)} · Despesas ${fmt(totalExpense)}`;
 }
 
 window.exportCSV = function() {
-  if (!transactions.length) { showToast('Nenhuma transação para exportar'); return; }
-  const header = 'Data,Tipo,Descrição,Categoria,Valor,Banco';
+  if (!transactions.length) { showToast('Nenhum lançamento para exportar'); return; }
+  const header = 'Data;Tipo;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa';
   const rows = transactions
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(t => [
       t.date,
-      t.type === 'income' ? 'Receita' : 'Despesa',
+      t.type === 'income' ? 'Recebimento' : 'Despesa',
       `"${(t.description || '').replace(/"/g, '""')}"`,
       t.category || '',
       Number(t.amount).toFixed(2).replace('.', ','),
@@ -2037,7 +2120,7 @@ window.exportCSV = function() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `caixa_do_gordinho_transacoes_${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `caixa_do_gordinho_lancamentos_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exportado!');
@@ -2105,7 +2188,7 @@ function processFile(file) {
       showToast('Formato não suportado. Use OFX ou CSV.');
       return;
     }
-    if (!importedTxs.length) { showToast('Nenhuma transação encontrada no arquivo.'); return; }
+    if (!importedTxs.length) { showToast('Nenhum lançamento encontrado no arquivo.'); return; }
     showImportPreview();
   };
   reader.readAsText(file, 'latin1');
@@ -2135,7 +2218,7 @@ function parseOFX(content) {
 
     const type = amt >= 0 ? 'income' : 'expense';
     const amount = Math.abs(amt);
-    const category = autoCategory(memo);
+    const category = autoCategory(memo, type);
 
     txs.push({ type, description: cleanDesc(memo), amount, date, category });
   });
@@ -2200,7 +2283,7 @@ function parseCSV(content) {
       if (t.includes('créd') || t.includes('entrada') || t.includes('recebimento')) type = 'income';
     }
 
-    const category = autoCategory(rawDesc);
+    const category = autoCategory(rawDesc, type);
     txs.push({ type, description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category });
   }
   return txs;
@@ -2225,22 +2308,29 @@ function cleanDesc(s) {
 }
 
 // ─── AUTO CATEGORIZER ───
-function autoCategory(desc) {
+function autoCategory(desc, type = 'expense') {
   const d = desc.toLowerCase();
-  if (/mercado|supermerc|hortifruti|atacad|carrefour|extra|pao de acucar|assai|makro|sacolao|feira|verdur/.test(d)) return 'Alimentação';
-  if (/restaur|lanche|burger|mc|subway|pizza|sushi|deliver|ifood|rappi|uber eat|padaria|cafe|bar |botec|churrasco/.test(d)) return 'Alimentação';
-  if (/posto|gasolina|combustiv|shell|ipiranga|br distribu|petrobras|etanol/.test(d)) return 'Transporte';
-  if (/uber|99|cabify|taxi|onibus|metro|bilhete|condução/.test(d)) return 'Transporte';
-  if (/farmacia|drogaria|remedios|unimed|plano de saude|hospital|clinica|medic|dentist|exame|laborat/.test(d)) return 'Saúde';
-  if (/aluguel|condomin|iptu|agua|luz|energia|enel|sabesp|cedae|gas /.test(d)) return 'Moradia';
-  if (/escola|faculdade|curso|udemy|alura|mensalidade|material escolar|uniforme/.test(d)) return 'Educação';
-  if (/netflix|spotify|amazon|disney|youtube|hbo|globoplay|steam|playstation|xbox|cinema|teatro|show/.test(d)) return 'Lazer';
-  if (/roupa|moda|zara|hm|renner|riachuelo|c&a|reserva|forum|sapato|tênis|adidas|nike/.test(d)) return 'Vestuário';
-  if (/salario|salário|holerite|pagamento emp/.test(d)) return 'Salário';
-  if (/freelance|pix receb|transferencia receb|ted receb/.test(d)) return 'Freelance';
-  if (/invest|acao|fundo|tesouro|cdb|lci|lca|rend/.test(d)) return 'Investimentos';
-  if (/celular|telefone|internet|tim|claro|vivo|oi |net |sky /.test(d)) return 'Serviços';
-  return 'Outros';
+  if (type === 'income') {
+    if (/ifood|rappi|delivery|entrega/.test(d)) return 'Delivery';
+    if (/evento|buffet|reserva|confraterniza|casamento|aniversario/.test(d)) return 'Eventos e Reservas';
+    if (/bebida|cerveja|refrigerante|suco|agua mineral|drink/.test(d)) return 'Venda de Bebidas';
+    if (/stone|cielo|rede |pagseguro|maquininha|cartao|cartão|venda/.test(d)) return 'Vendas no Salão';
+    return 'Outros Recebimentos';
+  }
+  if (/frigorif|acougue|açougue|carne|picanha|alcatra|costela|bovina|suina|suína|frango|linguica|linguiça/.test(d)) return 'Carnes e Proteínas';
+  if (/cerveja|refrigerante|bebida|distribuidora|agua mineral|suco|drink|vinho/.test(d)) return 'Bebidas';
+  if (/hortifruti|sacolao|sacolão|feira|verdura|legume|fruta/.test(d)) return 'Hortifruti';
+  if (/mercado|supermerc|atacad|assai|assaí|makro|carrefour|embalagem|descartavel|descartável|mercearia/.test(d)) return 'Mercearia e Insumos';
+  if (/salario|salário|folha|holerite|funcionario|funcionário|vale transporte|beneficio|benefício/.test(d)) return 'Folha e Equipe';
+  if (/ifood|rappi|delivery|entrega/.test(d)) return 'Taxas de Delivery';
+  if (/imposto|taxa|das |simples nacional|inss|fgts|iptu|contador|contabilidade/.test(d)) return 'Impostos e Taxas';
+  if (/aluguel|condomin|reforma|imovel|imóvel/.test(d)) return 'Aluguel e Estrutura';
+  if (/agua|água|luz|energia|enel|sabesp|cedae|gas |gás|botijao|botijão/.test(d)) return 'Água, Energia e Gás';
+  if (/manutenc|manutenç|conserto|reparo|equipamento|churrasqueira/.test(d)) return 'Manutenção';
+  if (/marketing|anuncio|anúncio|instagram|facebook|google ads|grafica|gráfica|panfleto/.test(d)) return 'Marketing';
+  if (/limpeza|higiene|detergente|desinfetante|sabao|sabão|papel toalha|uniforme/.test(d)) return 'Limpeza e Higiene';
+  if (/posto|gasolina|combustiv|diesel|etanol|uber|taxi|frete|transport/.test(d)) return 'Transporte e Logística';
+  return 'Outras Despesas';
 }
 
 function showImportPreview() {
@@ -2248,13 +2338,18 @@ function showImportPreview() {
   const expense = importedTxs.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
 
   document.getElementById('import-summary').innerHTML = `
-    📄 <strong>${importedTxs.length}</strong> transações encontradas<br/>
-    ↑ Receitas: <span style="color:var(--income)">${fmt(income)}</span><br/>
+    📄 <strong>${importedTxs.length}</strong> lançamentos encontrados<br/>
+    ↑ Recebimentos: <span style="color:var(--income)">${fmt(income)}</span><br/>
     ↓ Despesas: <span style="color:var(--expense)">${fmt(expense)}</span><br/>
     ≡ Saldo: <span style="color:var(--accent2)">${fmt(income - expense)}</span>
   `;
 
-  const EMOJI = { 'Moradia':'🏠','Alimentação':'🍔','Transporte':'🚗','Saúde':'💊','Educação':'📚','Lazer':'🎮','Vestuário':'👕','Serviços':'⚙️','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦' };
+  const EMOJI = {
+    'Faturamento':'💵','Vendas no Salão':'🍽️','Delivery':'🛵','Venda de Bebidas':'🥤','Eventos e Reservas':'🎉','Outros Recebimentos':'💰',
+    'Carnes e Proteínas':'🥩','Bebidas':'🥤','Hortifruti':'🥬','Mercearia e Insumos':'📦','Folha e Equipe':'👥',
+    'Impostos e Taxas':'🧾','Aluguel e Estrutura':'🏠','Água, Energia e Gás':'⚡','Manutenção':'🔧','Marketing':'📣',
+    'Taxas de Delivery':'🛵','Limpeza e Higiene':'🧼','Transporte e Logística':'🚚','Outras Despesas':'📋'
+  };
 
   const preview = document.getElementById('import-preview');
   preview.innerHTML = importedTxs.map((t, i) => `
@@ -2262,7 +2357,10 @@ function showImportPreview() {
       <span style="font-size:1rem;">${EMOJI[t.category]||'💰'}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-family:var(--font-body);font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.description}</div>
-        <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);margin-top:2px;">${t.date} · ${t.category}</div>
+        <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);margin-top:2px;">${t.date}</div>
+        <select aria-label="Categoria do lançamento ${i + 1}" onchange="updateImportCategory(${i}, this.value)" style="width:100%;margin-top:6px;padding:6px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;font-weight:700;">
+          ${BUSINESS_CATEGORIES[t.type].map(([value, label]) => `<option value="${value}" ${value === t.category ? 'selected' : ''}>${label}</option>`).join('')}
+        </select>
       </div>
       <div style="font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:${t.type==='income'?'var(--income)':'var(--expense)'};flex-shrink:0;">
         ${t.type==='income'?'+':'−'} ${fmt(t.amount)}
@@ -2271,10 +2369,15 @@ function showImportPreview() {
     </div>
   `).join('');
 
-  document.getElementById('confirm-import-btn').textContent = `Importar ${importedTxs.length} transações`;
+  document.getElementById('confirm-import-btn').textContent = `Importar ${importedTxs.length} lançamentos`;
   document.getElementById('import-step-1').style.display = 'none';
   document.getElementById('import-step-2').style.display = 'block';
 }
+
+window.updateImportCategory = function(i, category) {
+  const tx = importedTxs[i];
+  if (tx && BUSINESS_CATEGORIES[tx.type].some(([value]) => value === category)) tx.category = category;
+};
 
 window.removeImportTx = function(i) {
   importedTxs.splice(i, 1);
@@ -2323,7 +2426,7 @@ window.confirmImport = async function() {
 
   await refreshAll();
 
-  document.getElementById('import-done-msg').textContent = `${count} transações importadas com sucesso!`;
+  document.getElementById('import-done-msg').textContent = `${count} lançamentos importados com sucesso!`;
   document.getElementById('import-step-2').style.display = 'none';
   document.getElementById('import-step-3').style.display = 'block';
 };
