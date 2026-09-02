@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Caixa do Gordinho" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Caixa do Gordinho — Gestão da Churrascaria</title>
-  <link rel="manifest" href="manifest.json?v=5" />
+  <link rel="manifest" href="manifest.json?v=6" />
   <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
   <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
@@ -680,6 +680,26 @@
     }
 
     .modal-overlay.open { display: flex; }
+    .modal { max-height: 92dvh; overflow-y: auto; }
+    .field-note { margin: 8px 0; font-size: 0.8rem; line-height: 1.5; color: var(--text2); }
+    .category-link { background: none; border: none; padding: 8px 0; color: var(--accent); font-weight: 800; cursor: pointer; }
+    .category-settings { margin-bottom: 20px; }
+    .category-settings .settings-item { gap: 12px; }
+    .category-settings .settings-item > div { min-width: 0; overflow-wrap: anywhere; }
+    .tx-scope-badge { display: inline-block; margin-top: 6px; padding: 3px 7px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.7rem; font-weight: 800; }
+    .tx-scope-badge.personal { color: var(--accent); border-color: var(--accent); }
+    .tx-actions { display: flex; flex-direction: column; gap: 4px; }
+    .tx-actions button { min-width: 32px; min-height: 32px; }
+    .tx-edit { color: var(--accent); }
+    .summary-card.personal::before { background: var(--accent); }
+    .summary-value.personal { color: var(--accent); }
+    @media (max-width: 430px) {
+      .tx-item { gap: 8px; padding: 12px 10px; flex-wrap: wrap; }
+      .tx-icon { display: none; }
+      .tx-info { flex-basis: 100%; }
+      .tx-actions { flex-direction: row; margin-left: auto; }
+      .tx-meta { overflow-wrap: anywhere; }
+    }
 
     .modal {
       width: 100%;
@@ -1099,7 +1119,7 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <div class="business-context">☁️ Dados compartilhados em tempo real. Acompanhe recebimentos, despesas, caixa disponível e o resultado financeiro da churrascaria.</div>
+    <div class="business-context">☁️ Dados compartilhados. <strong>Churrascaria</strong> e <strong>Pessoal do proprietário</strong> separados. O resultado e os gráficos consideram apenas a churrascaria; os saldos das contas refletem todas as movimentações vinculadas.</div>
 
     <div class="section-title">Resumo Financeiro do Mês</div>
     <div class="summary-grid">
@@ -1112,8 +1132,13 @@
         <div class="summary-value expense" id="dash-expense">R$ 0,00</div>
       </div>
       <div class="summary-card balance full-width">
-        <div class="summary-label">📈 Resultado de Caixa do Mês</div>
+        <div class="summary-label">📈 Resultado da Churrascaria no Mês</div>
         <div class="summary-value balance" id="dash-result">R$ 0,00</div>
+      </div>
+      <div class="summary-card personal full-width">
+        <div class="summary-label">👤 Gastos e Retiradas do Proprietário</div>
+        <div class="summary-value personal" id="dash-personal">R$ 0,00</div>
+        <div class="field-note" id="dash-personal-note"></div>
       </div>
       <div class="summary-card banks full-width">
         <div class="summary-label">💳 Disponível em Contas e Caixa</div>
@@ -1140,7 +1165,7 @@
         </div>
       </div>
     </div>
-    <div class="metric-note">Recebimentos menos despesas, dividido pelos recebimentos registrados no mês.</div>
+    <div class="metric-note">Recebimentos menos despesas da churrascaria, dividido pelos recebimentos da churrascaria no mês. Movimentações pessoais ficam separadas.</div>
 
     <div class="section-title">Despesas por Categoria</div>
     <div class="category-list" id="category-list">
@@ -1175,11 +1200,18 @@
       </button>
     </div>
 
-    <div class="filter-chips">
+    <div class="filter-chips filter-type">
       <div class="chip active" onclick="setFilter('all', this)">Todos</div>
       <div class="chip" onclick="setFilter('income', this)">Recebimentos</div>
       <div class="chip" onclick="setFilter('expense', this)">Despesas</div>
     </div>
+
+    <div class="filter-chips filter-scope" aria-label="Filtrar por natureza">
+      <button class="chip active" onclick="setScopeFilter('all', this)">Todas as naturezas</button>
+      <button class="chip" onclick="setScopeFilter('business', this)">Churrascaria</button>
+      <button class="chip" onclick="setScopeFilter('personal', this)">Pessoal do proprietário</button>
+    </div>
+    <div class="field-note">Use o lápis para corrigir a natureza ou categoria. Lançamentos antigos ficam como Churrascaria até serem revisados. T e E identificam quem lançou.</div>
 
     <div class="transactions-list" id="tx-list">
       <div class="empty-state">
@@ -1229,6 +1261,18 @@
   <div id="page-settings" class="page">
     <div class="section-title">Configurações</div>
 
+    <div class="settings-section category-settings">
+      <div class="settings-item">
+        <div>
+          <div class="settings-item-label">Categorias personalizadas</div>
+          <div class="settings-item-sub">Disponíveis para Thiago e Ernani. As categorias padrão continuam disponíveis.</div>
+        </div>
+        <button class="category-link" onclick="openCategoryModal()">+ Criar categoria</button>
+      </div>
+      <div id="custom-categories-list"></div>
+    </div>
+    <div class="business-context"><strong>Como separar:</strong> compra de carne para o salão → Churrascaria. Compra pessoal do dono → Pessoal do proprietário. Se a empresa pagou, selecione a conta da empresa de onde saiu o dinheiro e registre a saída uma única vez.</div>
+
     <div class="settings-section">
       <div class="settings-item">
         <div>
@@ -1276,7 +1320,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      CAIXA DO GORDINHO v1.4 — GESTÃO FINANCEIRA DA CHURRASCARIA
+      CAIXA DO GORDINHO v1.5 — GESTÃO FINANCEIRA DA CHURRASCARIA
     </div>
   </div>
 
@@ -1326,6 +1370,14 @@
       <input type="date" id="tx-date" />
     </div>
     <div class="form-field">
+      <label for="tx-scope">Natureza do lançamento</label>
+      <select id="tx-scope" onchange="setScope(this.value)">
+        <option value="business">Churrascaria</option>
+        <option value="personal">Pessoal do proprietário</option>
+      </select>
+      <div class="field-note" id="tx-scope-note"></div>
+    </div>
+    <div class="form-field">
       <label>Categoria / Centro de Custo</label>
       <select id="tx-category">
         <option value="Carnes e Proteínas">🥩 Carnes e Proteínas</option>
@@ -1344,6 +1396,7 @@
         <option value="Outras Despesas">📋 Outras Despesas</option>
       </select>
     </div>
+      <button class="category-link" onclick="openCategoryModal(true)">+ Criar nova categoria</button>
     <div class="form-field">
       <label>Conta ou Caixa (opcional)</label>
       <select id="tx-bank">
@@ -1352,7 +1405,31 @@
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeTxModal()">Cancelar</button>
-      <button class="btn-save" onclick="saveTx()">Salvar</button>
+      <button class="btn-save" id="save-tx-btn" onclick="saveTx()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CUSTOM CATEGORY -->
+<div class="modal-overlay" id="category-modal" style="z-index:510;">
+  <div class="modal">
+    <div class="modal-title">Criar Categoria</div>
+    <div class="form-field">
+      <label for="category-name">Nome da categoria</label>
+      <input id="category-name" type="text" maxlength="60" placeholder="Ex: Açougue, Escola dos filhos..." />
+    </div>
+    <div class="form-field">
+      <label for="category-scope">Natureza</label>
+      <select id="category-scope"><option value="business">Churrascaria</option><option value="personal">Pessoal do proprietário</option></select>
+    </div>
+    <div class="form-field">
+      <label for="category-type">Tipo</label>
+      <select id="category-type"><option value="expense">Despesa</option><option value="income">Recebimento</option></select>
+    </div>
+    <div class="field-note">A categoria ficará disponível para os dois usuários, na natureza e no tipo selecionados.</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('category-modal').classList.remove('open')">Cancelar</button>
+      <button class="btn-save" id="save-category-btn" onclick="saveCustomCategory()">Criar categoria</button>
     </div>
   </div>
 </div>
@@ -1517,7 +1594,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, onSnapshot, increment
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, onSnapshot, increment, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1553,6 +1630,11 @@ let transactions = [];
 let banks = [];
 let goals = [];
 let txFilter = 'all';
+let txScopeFilter = 'all';
+let txScope = 'business';
+let editingTxId = null;
+let customCategories = [];
+let categoryFromTx = false;
 let editingBankId = null;
 let realtimeUnsubscribers = [];
 
@@ -1616,6 +1698,7 @@ function updateMonthLabel() {
 function txCol() { return collection(db, 'vault_transactions'); }
 function banksCol() { return collection(db, 'vault_banks'); }
 function goalsCol() { return collection(db, 'vault_goals'); }
+function categoriesCol() { return collection(db, 'vault_categories'); }
 function sharedDataQuery(col) { return query(col, where('uid', 'in', SHARED_DATA_UIDS)); }
 
 function stopRealtimeSync() {
@@ -1644,7 +1727,17 @@ function startRealtimeSync() {
     onSnapshot(sharedDataQuery(goalsCol()), snap => {
       goals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       renderGoals();
-    }, syncError)
+    }, syncError),
+    onSnapshot(sharedDataQuery(categoriesCol()), snap => {
+      customCategories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderCustomCategories();
+      if (document.getElementById('tx-modal').classList.contains('open')) {
+        updateCategoryOptions(txType, txScope, document.getElementById('tx-category').value);
+      }
+    }, error => {
+      console.error('Erro ao carregar categorias:', error);
+      document.getElementById('custom-categories-list').textContent = 'Não foi possível carregar as categorias compartilhadas. Verifique a conexão e a permissão do banco para categorias.';
+    })
   ];
 }
 
@@ -1681,6 +1774,13 @@ function fmt(v) {
   return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function scopeOf(tx) { return tx.scope === 'personal' ? 'personal' : 'business'; }
+function scopeLabel(scope) { return scope === 'personal' ? 'Pessoal do proprietário' : 'Churrascaria'; }
+function signedAmount(tx) { return tx.type === 'income' ? tx.amount : -tx.amount; }
+
 function monthTxs(m, y) {
   return transactions.filter(t => {
     const d = new Date(t.date + 'T12:00:00');
@@ -1690,7 +1790,13 @@ function monthTxs(m, y) {
 
 // ─── DASHBOARD ───
 function renderDashboard() {
-  const txs = monthTxs(currentMonth, currentYear);
+  const allTxs = monthTxs(currentMonth, currentYear);
+  const txs = allTxs.filter(t => scopeOf(t) === 'business');
+  const personalTxs = allTxs.filter(t => scopeOf(t) === 'personal');
+  const personalExpense = personalTxs.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const personalIncome = personalTxs.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  document.getElementById('dash-personal').textContent = fmt(personalExpense);
+  document.getElementById('dash-personal-note').textContent = `Entradas do proprietário: ${fmt(personalIncome)} · Saldo dessas movimentações: ${fmt(personalIncome - personalExpense)}. Fora do resultado da churrascaria.`;
   const income  = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
   const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const result  = income - expense; // resultado do mês (entradas - saídas)
@@ -1753,7 +1859,7 @@ function renderDashboard() {
     catEl.innerHTML = sorted.map(([cat, val], i) => `
       <div class="cat-item">
         <div class="cat-header">
-          <div class="cat-name">${cat}</div>
+          <div class="cat-name">${escapeHtml(cat)}</div>
           <div class="cat-amount">${fmt(val)}</div>
         </div>
         <div class="cat-bar">
@@ -1776,7 +1882,7 @@ function renderBarChart() {
   }
 
   const maxVal = Math.max(...months.map(({ m, y }) => {
-    const txs = monthTxs(m, y);
+    const txs = monthTxs(m, y).filter(t => scopeOf(t) === 'business');
     return Math.max(
       txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0),
       txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
@@ -1785,7 +1891,7 @@ function renderBarChart() {
 
   const chart = document.getElementById('bar-chart');
   chart.innerHTML = months.map(({ m, y, label }) => {
-    const txs = monthTxs(m, y);
+    const txs = monthTxs(m, y).filter(t => scopeOf(t) === 'business');
     const inc = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
     const exp = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
     const incH = Math.max(2, (inc / maxVal) * 90);
@@ -1806,6 +1912,7 @@ function renderBarChart() {
 function renderTransactions() {
   const txs = monthTxs(currentMonth, currentYear)
     .filter(t => txFilter === 'all' || t.type === txFilter)
+    .filter(t => txScopeFilter === 'all' || scopeOf(t) === txScopeFilter)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const el = document.getElementById('tx-list');
@@ -1837,13 +1944,17 @@ function renderTransactions() {
         <div class="tx-icon ${t.type}">${EMOJI[t.category] || '💰'}</div>
         <div class="tx-info">
           <div class="tx-title-row">
-            <div class="tx-desc">${t.description}</div>
+            <div class="tx-desc">${escapeHtml(t.description)}</div>
             ${authorBadge}
           </div>
-          <div class="tx-meta">${dateStr} · ${t.category}${t.bankName ? ' · ' + t.bankName : ''}</div>
+          <div class="tx-meta">${dateStr} · ${escapeHtml(t.category)}${t.bankName ? ' · ' + escapeHtml(t.bankName) : ''}</div>
+          <span class="tx-scope-badge ${scopeOf(t)}">${scopeLabel(scopeOf(t))}</span>
         </div>
         <div class="tx-amount ${t.type}">${sign} ${fmt(t.amount)}</div>
-        <button class="tx-del" onclick="deleteTx('${t.id}')">✕</button>
+        <div class="tx-actions">
+          <button class="tx-del tx-edit" onclick="openTxModal('${t.id}')" title="Editar lançamento" aria-label="Editar lançamento">✎</button>
+          <button class="tx-del" onclick="deleteTx('${t.id}')" title="Excluir lançamento" aria-label="Excluir lançamento">✕</button>
+        </div>
       </div>
     `;
   }).join('');
@@ -1851,12 +1962,19 @@ function renderTransactions() {
 
 window.setFilter = function(f, el) {
   txFilter = f;
-  document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.filter-type .chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   renderTransactions();
 };
 
 // ─── TX MODAL ───
+window.setScopeFilter = function(scope, el) {
+  txScopeFilter = scope;
+  document.querySelectorAll('.filter-scope .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderTransactions();
+};
+
 const BUSINESS_CATEGORIES = {
   income: [
     ['Faturamento','💵 Faturamento / Vendas Gerais'],
@@ -1884,41 +2002,95 @@ const BUSINESS_CATEGORIES = {
   ]
 };
 
-function updateCategoryOptions(type) {
-  const select = document.getElementById('tx-category');
-  select.innerHTML = BUSINESS_CATEGORIES[type]
-    .map(([value, label]) => `<option value="${value}">${label}</option>`)
-    .join('');
+const PERSONAL_CATEGORIES = {
+  income: [
+    ['Aporte do Proprietário','💰 Aporte do Proprietário'],
+    ['Reembolso Pessoal','↩️ Reembolso Pessoal'],
+    ['Outros Recebimentos Pessoais','💵 Outros Recebimentos Pessoais']
+  ],
+  expense: [
+    ['Retirada do Proprietário','👤 Retirada do Proprietário'],
+    ['Alimentação Pessoal','🍔 Alimentação Pessoal'],
+    ['Moradia Pessoal','🏠 Moradia Pessoal'],
+    ['Saúde Pessoal','💊 Saúde Pessoal'],
+    ['Lazer Pessoal','🎮 Lazer Pessoal'],
+    ['Compras Pessoais','🛍️ Compras Pessoais'],
+    ['Veículo Pessoal','🚗 Veículo Pessoal'],
+    ['Outras Despesas Pessoais','📋 Outras Despesas Pessoais']
+  ]
+};
+
+function getCategoryOptions(type, scope) {
+  const defaults = scope === 'personal' ? PERSONAL_CATEGORIES[type] : BUSINESS_CATEGORIES[type];
+  const custom = customCategories
+    .filter(category => category.type === type && category.scope === scope && category.active !== false)
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    .map(category => [category.name, `⭐ ${category.name}`]);
+  const used = new Set();
+  return [...defaults, ...custom].filter(([value]) => {
+    const key = value.trim().toLocaleLowerCase('pt-BR');
+    if (used.has(key)) return false;
+    used.add(key);
+    return true;
+  });
 }
 
-window.openTxModal = function() {
+function updateCategoryOptions(type, scope = txScope, selected = '') {
+  const select = document.getElementById('tx-category');
+  const options = getCategoryOptions(type, scope);
+  if (selected && !options.some(([value]) => value === selected)) options.unshift([selected, `📝 ${selected} (categoria anterior)`]);
+  select.innerHTML = options
+    .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`)
+    .join('');
+  if (selected) select.value = selected;
+}
+
+window.openTxModal = function(id = null) {
+  const existing = id ? transactions.find(tx => tx.id === id) : null;
+  editingTxId = existing?.id || null;
   document.getElementById('tx-modal').classList.add('open');
-  document.getElementById('tx-modal-title').textContent = 'Novo Lançamento';
-  document.getElementById('tx-desc').value = '';
-  document.getElementById('tx-amount').value = '';
-  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-  setType('expense');
-  document.getElementById('tx-category').value = 'Carnes e Proteínas';
-  // populate bank select
+  document.getElementById('tx-modal-title').textContent = existing ? 'Editar Lançamento' : 'Novo Lançamento';
+  document.getElementById('save-tx-btn').textContent = existing ? 'Salvar alterações' : 'Salvar';
   const sel = document.getElementById('tx-bank');
   sel.innerHTML = '<option value="">— Nenhum —</option>' +
-    banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    banks.map(b => `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name)}</option>`).join('');
+  document.getElementById('tx-desc').value = existing?.description || '';
+  document.getElementById('tx-amount').value = existing?.amount || '';
+  document.getElementById('tx-date').value = existing?.date || new Date().toISOString().split('T')[0];
+  txScope = existing ? scopeOf(existing) : 'business';
+  document.getElementById('tx-scope').value = txScope;
+  setType(existing?.type || 'expense', existing?.category || '');
+  document.getElementById('tx-bank').value = existing?.bankId || '';
+  updateScopeNote();
 };
 
 window.closeTxModal = function() {
   document.getElementById('tx-modal').classList.remove('open');
+  editingTxId = null;
 };
 
 let txType = 'expense';
-window.setType = function(t) {
+window.setType = function(t, selectedCategory = '') {
   txType = t;
   document.getElementById('type-income-btn').classList.toggle('active', t === 'income');
   document.getElementById('type-expense-btn').classList.toggle('active', t === 'expense');
-  updateCategoryOptions(t);
+  updateCategoryOptions(t, txScope, selectedCategory);
   document.getElementById('tx-desc').placeholder = t === 'income'
     ? 'Ex: vendas no salão, delivery, evento...'
     : 'Ex: compra de carnes, energia, fornecedor...';
 };
+
+window.setScope = function(scope) {
+  txScope = scope === 'personal' ? 'personal' : 'business';
+  updateCategoryOptions(txType, txScope);
+  updateScopeNote();
+};
+
+function updateScopeNote() {
+  document.getElementById('tx-scope-note').textContent = txScope === 'personal'
+    ? 'Ficará fora do resultado da churrascaria. Selecione a conta caso o dinheiro tenha saído ou entrado nela.'
+    : 'Entra no resultado operacional e nos gráficos da churrascaria.';
+}
 
 // ─── RENDER ALL (garante que todas as telas ficam sincronizadas) ───
 async function refreshAll() {
@@ -1947,24 +2119,142 @@ window.saveTx = async function() {
 
   if (!desc || !amount || !date) { showToast('Preencha todos os campos'); return; }
 
-  await addDoc(txCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, type: txType, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
-  await updateBankBalance(bankId, amount, txType);
-  closeTxModal();
-  await refreshAll();
-  showToast('Lançamento salvo!');
+  const saveBtn = document.getElementById('save-tx-btn');
+  const isEditing = Boolean(editingTxId);
+  saveBtn.disabled = true;
+  try {
+    if (!editingTxId) {
+      await addDoc(txCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, type: txType, scope: txScope, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
+      await updateBankBalance(bankId, amount, txType);
+    } else {
+      const txId = editingTxId;
+      await runTransaction(db, async firestoreTx => {
+        const txRef = doc(db, 'vault_transactions', txId);
+        const snapshot = await firestoreTx.get(txRef);
+        if (!snapshot.exists()) throw new Error('Lançamento não encontrado.');
+        const previous = snapshot.data();
+        const deltas = new Map();
+        if (previous.bankId) deltas.set(previous.bankId, (deltas.get(previous.bankId) || 0) - signedAmount(previous));
+        if (bankId) deltas.set(bankId, (deltas.get(bankId) || 0) + (txType === 'income' ? amount : -amount));
+        for (const [id, delta] of deltas) {
+          if (delta) firestoreTx.update(doc(db, 'vault_banks', id), { balance: increment(delta) });
+        }
+        firestoreTx.update(txRef, { type: txType, scope: txScope, description: desc, amount, date, category, bankId, bankName, updatedAt: Date.now(), updatedBy: currentUser.uid });
+      });
+    }
+    closeTxModal();
+    await refreshAll();
+    showToast(isEditing ? 'Lançamento atualizado!' : 'Lançamento salvo!');
+  } catch(error) {
+    console.error(error);
+    showToast(error.message || 'Erro ao salvar lançamento');
+  } finally {
+    saveBtn.disabled = false;
+  }
 };
 
 window.deleteTx = async function(id) {
   if (!confirm('Excluir este lançamento?')) return;
-  // Reverter o saldo do banco antes de deletar
-  const tx = transactions.find(t => t.id === id);
-  if (tx && tx.bankId) {
-    const reverseType = tx.type === 'income' ? 'expense' : 'income';
-    await updateBankBalance(tx.bankId, tx.amount, reverseType);
+  try {
+    await runTransaction(db, async firestoreTx => {
+      const txRef = doc(db, 'vault_transactions', id);
+      const snapshot = await firestoreTx.get(txRef);
+      if (!snapshot.exists()) return;
+      const tx = snapshot.data();
+      if (tx.bankId) firestoreTx.update(doc(db, 'vault_banks', tx.bankId), { balance: increment(-signedAmount(tx)) });
+      firestoreTx.delete(txRef);
+    });
+    await refreshAll();
+    showToast('Excluído e saldo atualizado');
+  } catch(error) {
+    console.error(error);
+    showToast('Erro ao excluir lançamento');
   }
-  await deleteDoc(doc(db, 'vault_transactions', id));
-  await refreshAll();
-  showToast('Excluído');
+};
+
+// ─── CUSTOM CATEGORIES ───
+function normalizeCategoryName(value) {
+  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+}
+
+function categoryDocumentId(name, scope, type) {
+  return `${BUSINESS_UID}-${scope}-${type}-${encodeURIComponent(normalizeCategoryName(name))}`;
+}
+
+window.openCategoryModal = function(fromTx = false) {
+  categoryFromTx = fromTx;
+  document.getElementById('category-name').value = '';
+  document.getElementById('category-scope').value = fromTx ? txScope : 'business';
+  document.getElementById('category-type').value = fromTx ? txType : 'expense';
+  document.getElementById('category-modal').classList.add('open');
+  setTimeout(() => document.getElementById('category-name').focus(), 50);
+};
+
+window.saveCustomCategory = async function() {
+  const name = document.getElementById('category-name').value.trim().replace(/\s+/g, ' ');
+  const scope = document.getElementById('category-scope').value === 'personal' ? 'personal' : 'business';
+  const type = document.getElementById('category-type').value === 'income' ? 'income' : 'expense';
+  if (name.length < 2) { showToast('Digite um nome para a categoria'); return; }
+  const normalized = normalizeCategoryName(name);
+  if (getCategoryOptions(type, scope).some(([value]) => normalizeCategoryName(value) === normalized)) {
+    showToast('Essa categoria já existe nessa natureza'); return;
+  }
+  const button = document.getElementById('save-category-btn');
+  button.disabled = true;
+  try {
+    const ref = doc(db, 'vault_categories', categoryDocumentId(name, scope, type));
+    await runTransaction(db, async firestoreTx => {
+      if ((await firestoreTx.get(ref)).exists()) throw new Error('Essa categoria já existe.');
+      firestoreTx.set(ref, { uid: BUSINESS_UID, businessId: BUSINESS_UID, name, normalizedName: normalized, scope, type, active: true, createdBy: currentUser.uid, createdAt: Date.now() });
+    });
+    customCategories = [...customCategories.filter(category => category.id !== ref.id), { id: ref.id, name, scope, type, active: true, createdBy: currentUser.uid }];
+    renderCustomCategories();
+    document.getElementById('category-modal').classList.remove('open');
+    if (categoryFromTx && document.getElementById('tx-modal').classList.contains('open')) {
+      txScope = scope;
+      document.getElementById('tx-scope').value = scope;
+      setType(type, name);
+      updateScopeNote();
+    }
+    showToast('Categoria criada e compartilhada!');
+  } catch(error) {
+    console.error(error);
+    showToast(error.message || 'Erro ao criar categoria');
+  } finally {
+    button.disabled = false;
+  }
+};
+
+function renderCustomCategories() {
+  const container = document.getElementById('custom-categories-list');
+  if (!container) return;
+  if (!customCategories.length) {
+    container.innerHTML = '<div class="settings-item"><div class="settings-item-sub">Nenhuma categoria personalizada criada.</div></div>';
+    return;
+  }
+  const ordered = [...customCategories].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  container.innerHTML = ordered.map(category => `
+    <div class="settings-item">
+      <div>
+        <div class="settings-item-label">${escapeHtml(category.name)}</div>
+        <div class="settings-item-sub">${scopeLabel(category.scope)} · ${category.type === 'income' ? 'Recebimento' : 'Despesa'}</div>
+      </div>
+      <button class="icon-btn delete" onclick="deleteCustomCategory('${escapeHtml(category.id)}')" title="Excluir categoria">✕</button>
+    </div>`).join('');
+}
+
+window.deleteCustomCategory = async function(id) {
+  const category = customCategories.find(item => item.id === id);
+  if (!category || !confirm(`Excluir a categoria “${category.name}”? Os lançamentos antigos manterão esse nome.`)) return;
+  try {
+    await deleteDoc(doc(db, 'vault_categories', id));
+    customCategories = customCategories.filter(item => item.id !== id);
+    renderCustomCategories();
+    showToast('Categoria excluída. Lançamentos antigos foram preservados.');
+  } catch(error) {
+    console.error(error);
+    showToast('Erro ao excluir categoria');
+  }
 };
 
 // ─── BANKS ───
@@ -2173,25 +2463,30 @@ function renderSettings() {
   const nameEl = document.getElementById('settings-user-name');
   if (nameEl && currentUser) nameEl.textContent = currentUser.name;
 
-  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const businessTxs = transactions.filter(t => scopeOf(t) === 'business');
+  const totalIncome  = businessTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+  const totalExpense = businessTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  const personalExpense = transactions.filter(t => scopeOf(t) === 'personal' && t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const sumEl = document.getElementById('settings-summary');
-  if (sumEl) sumEl.textContent = `${transactions.length} lançamentos · Recebimentos ${fmt(totalIncome)} · Despesas ${fmt(totalExpense)}`;
+  if (sumEl) sumEl.textContent = `${businessTxs.length} lançamentos da churrascaria · Recebimentos ${fmt(totalIncome)} · Despesas ${fmt(totalExpense)} · Gastos/retiradas pessoais ${fmt(personalExpense)}`;
+  renderCustomCategories();
 }
 
 window.exportCSV = function() {
   if (!transactions.length) { showToast('Nenhum lançamento para exportar'); return; }
-  const header = 'Data;Tipo;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa;Responsável';
+  const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const header = 'Data;Tipo;Natureza;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa;Responsável';
   const rows = transactions
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(t => [
       t.date,
       t.type === 'income' ? 'Recebimento' : 'Despesa',
-      `"${(t.description || '').replace(/"/g, '""')}"`,
-      t.category || '',
+      scopeLabel(scopeOf(t)),
+      csvCell(t.description),
+      csvCell(t.category),
       Number(t.amount).toFixed(2).replace('.', ','),
-      t.bankName || '',
-      USERS_BY_UID[t.createdBy || (t.uid !== BUSINESS_UID ? t.uid : '')]?.name || ''
+      csvCell(t.bankName),
+      csvCell(USERS_BY_UID[t.createdBy || (t.uid !== BUSINESS_UID ? t.uid : '')]?.name || '')
     ].join(';'));
   const csv = [header, ...rows].join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2298,7 +2593,7 @@ function parseOFX(content) {
     const amount = Math.abs(amt);
     const category = autoCategory(memo, type);
 
-    txs.push({ type, description: cleanDesc(memo), amount, date, category });
+    txs.push({ type, scope: 'business', description: cleanDesc(memo), amount, date, category });
   });
   return txs;
 }
@@ -2362,7 +2657,7 @@ function parseCSV(content) {
     }
 
     const category = autoCategory(rawDesc, type);
-    txs.push({ type, description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category });
+    txs.push({ type, scope: 'business', description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category });
   }
   return txs;
 }
@@ -2434,10 +2729,14 @@ function showImportPreview() {
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:10px 12px;display:flex;align-items:center;gap:10px;border-left:3px solid ${t.type==='income'?'var(--income)':'var(--expense)'};">
       <span style="font-size:1rem;">${EMOJI[t.category]||'💰'}</span>
       <div style="flex:1;min-width:0;">
-        <div style="font-family:var(--font-body);font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.description}</div>
+        <div style="font-family:var(--font-body);font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.description)}</div>
         <div style="font-family:var(--font-mono);font-size:0.65rem;color:var(--text2);margin-top:2px;">${t.date}</div>
+        <select aria-label="Natureza do lançamento ${i + 1}" onchange="updateImportScope(${i}, this.value)" style="width:100%;margin-top:6px;padding:6px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;font-weight:700;">
+          <option value="business" ${scopeOf(t) === 'business' ? 'selected' : ''}>Churrascaria</option>
+          <option value="personal" ${scopeOf(t) === 'personal' ? 'selected' : ''}>Pessoal do proprietário</option>
+        </select>
         <select aria-label="Categoria do lançamento ${i + 1}" onchange="updateImportCategory(${i}, this.value)" style="width:100%;margin-top:6px;padding:6px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;font-weight:700;">
-          ${BUSINESS_CATEGORIES[t.type].map(([value, label]) => `<option value="${value}" ${value === t.category ? 'selected' : ''}>${label}</option>`).join('')}
+          ${getCategoryOptions(t.type, scopeOf(t)).map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === t.category ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
         </select>
       </div>
       <div style="font-family:var(--font-mono);font-size:0.8rem;font-weight:700;color:${t.type==='income'?'var(--income)':'var(--expense)'};flex-shrink:0;">
@@ -2454,7 +2753,15 @@ function showImportPreview() {
 
 window.updateImportCategory = function(i, category) {
   const tx = importedTxs[i];
-  if (tx && BUSINESS_CATEGORIES[tx.type].some(([value]) => value === category)) tx.category = category;
+  if (tx && getCategoryOptions(tx.type, scopeOf(tx)).some(([value]) => value === category)) tx.category = category;
+};
+
+window.updateImportScope = function(i, scope) {
+  const tx = importedTxs[i];
+  if (!tx) return;
+  tx.scope = scope === 'personal' ? 'personal' : 'business';
+  tx.category = getCategoryOptions(tx.type, tx.scope)[0][0];
+  showImportPreview();
 };
 
 window.removeImportTx = function(i) {
@@ -2480,6 +2787,7 @@ window.confirmImport = async function() {
       businessId: BUSINESS_UID,
       createdBy: currentUser.uid,
       type: t.type,
+      scope: scopeOf(t),
       description: t.description,
       amount: t.amount,
       date: t.date,

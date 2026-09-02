@@ -1,7 +1,7 @@
 {
   "name": "Caixa do Gordinho — Gestão da Churrascaria",
   "short_name": "Caixa do Gordinho",
-  "description": "Recebimentos, despesas, contas, caixas e objetivos financeiros da churrascaria",
+  "description": "Gestão financeira da churrascaria com categorias e separação das movimentações pessoais do proprietário",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#35080b",
