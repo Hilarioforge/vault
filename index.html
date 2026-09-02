@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Caixa do Gordinho" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Caixa do Gordinho — Gestão da Churrascaria</title>
-  <link rel="manifest" href="manifest.json?v=3" />
+  <link rel="manifest" href="manifest.json?v=5" />
   <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
   <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
@@ -556,7 +556,16 @@
 
     .tx-info { flex: 1; min-width: 0; }
 
+    .tx-title-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
     .tx-desc {
+      flex: 1;
+      min-width: 0;
       font-family: var(--font-body);
       font-size: 0.9rem;
       font-weight: 600;
@@ -564,6 +573,23 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .tx-author-badge {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      background: rgba(255,212,59,0.1);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 0.62rem;
+      font-weight: 900;
+      box-shadow: 0 0 8px rgba(255,212,59,0.15);
     }
 
     .tx-meta {
@@ -1073,7 +1099,7 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <div class="business-context">🍖 Acompanhe recebimentos, despesas, caixa disponível e o resultado financeiro da churrascaria.</div>
+    <div class="business-context">☁️ Dados compartilhados em tempo real. Acompanhe recebimentos, despesas, caixa disponível e o resultado financeiro da churrascaria.</div>
 
     <div class="section-title">Resumo Financeiro do Mês</div>
     <div class="summary-grid">
@@ -1212,6 +1238,13 @@
       </div>
       <div class="settings-item">
         <div>
+          <div class="settings-item-label">Banco de dados compartilhado</div>
+          <div class="settings-item-sub">Firebase Cloud · sincronização em tempo real para todos os usuários autorizados</div>
+        </div>
+        <div style="color:var(--income);font-size:1rem;font-weight:700;">●</div>
+      </div>
+      <div class="settings-item">
+        <div>
           <div class="settings-item-label">Exportar lançamentos (CSV)</div>
           <div class="settings-item-sub">Baixar a movimentação financeira da churrascaria</div>
         </div>
@@ -1243,7 +1276,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      CAIXA DO GORDINHO v1.2 — GESTÃO FINANCEIRA DA CHURRASCARIA
+      CAIXA DO GORDINHO v1.4 — GESTÃO FINANCEIRA DA CHURRASCARIA
     </div>
   </div>
 
@@ -1484,7 +1517,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, orderBy, onSnapshot, increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1505,6 +1538,12 @@ const USERS = {
   "thiago brito": { password: "Supertux@98", name: "Thiago Brito", uid: "thiago" },
   "ernani": { password: "acsaalmeida0504", name: "Ernani", uid: "ernani" }
 };
+const USERS_BY_UID = Object.fromEntries(Object.values(USERS).map(user => [user.uid, user]));
+
+// Todos os usuários autorizados trabalham na mesma base da churrascaria.
+// Os IDs antigos continuam incluídos para preservar e reunir os dados já cadastrados.
+const BUSINESS_UID = 'caixa-do-gordinho';
+const SHARED_DATA_UIDS = [...new Set([BUSINESS_UID, ...Object.values(USERS).map(user => user.uid)])];
 
 // ─── STATE ───
 let currentUser = null;
@@ -1515,6 +1554,7 @@ let banks = [];
 let goals = [];
 let txFilter = 'all';
 let editingBankId = null;
+let realtimeUnsubscribers = [];
 
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
@@ -1529,7 +1569,7 @@ window.doLogin = function() {
     document.getElementById('app').style.display = 'block';
     document.getElementById('user-badge').textContent = user.name.toUpperCase();
     document.getElementById('auth-error').textContent = '';
-    loadAll();
+    startRealtimeSync();
     updateMonthLabel();
   } else {
     document.getElementById('auth-error').textContent = 'Usuário ou senha incorretos.';
@@ -1537,6 +1577,7 @@ window.doLogin = function() {
 };
 
 window.doLogout = function() {
+  stopRealtimeSync();
   currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -1575,6 +1616,37 @@ function updateMonthLabel() {
 function txCol() { return collection(db, 'vault_transactions'); }
 function banksCol() { return collection(db, 'vault_banks'); }
 function goalsCol() { return collection(db, 'vault_goals'); }
+function sharedDataQuery(col) { return query(col, where('uid', 'in', SHARED_DATA_UIDS)); }
+
+function stopRealtimeSync() {
+  realtimeUnsubscribers.forEach(unsubscribe => unsubscribe());
+  realtimeUnsubscribers = [];
+}
+
+function startRealtimeSync() {
+  stopRealtimeSync();
+  const syncError = error => {
+    console.error('Erro de sincronização:', error);
+    showToast('Não foi possível sincronizar os dados agora.');
+  };
+  realtimeUnsubscribers = [
+    onSnapshot(sharedDataQuery(txCol()), snap => {
+      transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderDashboard();
+      renderTransactions();
+      renderSettings();
+    }, syncError),
+    onSnapshot(sharedDataQuery(banksCol()), snap => {
+      banks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderDashboard();
+      renderBanks();
+    }, syncError),
+    onSnapshot(sharedDataQuery(goalsCol()), snap => {
+      goals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderGoals();
+    }, syncError)
+  ];
+}
 
 // ─── LOAD ───
 async function loadAll() {
@@ -1587,19 +1659,19 @@ async function loadAll() {
 }
 
 async function loadTransactions() {
-  const q = query(txCol(), where('uid', '==', currentUser.uid));
+  const q = sharedDataQuery(txCol());
   const snap = await getDocs(q);
   transactions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 async function loadBanks() {
-  const q = query(banksCol(), where('uid', '==', currentUser.uid));
+  const q = sharedDataQuery(banksCol());
   const snap = await getDocs(q);
   banks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 async function loadGoals() {
-  const q = query(goalsCol(), where('uid', '==', currentUser.uid));
+  const q = sharedDataQuery(goalsCol());
   const snap = await getDocs(q);
   goals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
@@ -1755,11 +1827,19 @@ function renderTransactions() {
     const d = new Date(t.date + 'T12:00:00');
     const dateStr = d.toLocaleDateString('pt-BR');
     const sign = t.type === 'income' ? '+' : '−';
+    const authorUid = t.createdBy || (t.uid !== BUSINESS_UID ? t.uid : '');
+    const author = USERS_BY_UID[authorUid];
+    const authorBadge = author
+      ? `<span class="tx-author-badge" title="Lançado por ${author.name}" aria-label="Lançado por ${author.name}">${author.name.charAt(0).toUpperCase()}</span>`
+      : '';
     return `
       <div class="tx-item ${t.type}">
         <div class="tx-icon ${t.type}">${EMOJI[t.category] || '💰'}</div>
         <div class="tx-info">
-          <div class="tx-desc">${t.description}</div>
+          <div class="tx-title-row">
+            <div class="tx-desc">${t.description}</div>
+            ${authorBadge}
+          </div>
           <div class="tx-meta">${dateStr} · ${t.category}${t.bankName ? ' · ' + t.bankName : ''}</div>
         </div>
         <div class="tx-amount ${t.type}">${sign} ${fmt(t.amount)}</div>
@@ -1853,11 +1933,8 @@ async function refreshAll() {
 // ─── ATUALIZA SALDO DO BANCO ───
 async function updateBankBalance(bankId, amount, type) {
   if (!bankId) return;
-  const bank = banks.find(b => b.id === bankId);
-  if (!bank) return;
   const delta = type === 'income' ? amount : -amount;
-  const newBalance = (bank.balance || 0) + delta;
-  await updateDoc(doc(db, 'vault_banks', bankId), { balance: newBalance });
+  await updateDoc(doc(db, 'vault_banks', bankId), { balance: increment(delta) });
 }
 
 window.saveTx = async function() {
@@ -1870,7 +1947,7 @@ window.saveTx = async function() {
 
   if (!desc || !amount || !date) { showToast('Preencha todos os campos'); return; }
 
-  await addDoc(txCol(), { uid: currentUser.uid, type: txType, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
+  await addDoc(txCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, type: txType, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
   await updateBankBalance(bankId, amount, txType);
   closeTxModal();
   await refreshAll();
@@ -1934,7 +2011,7 @@ window.saveBank = async function() {
   const balance = parseFloat(document.getElementById('bank-balance').value) || 0;
   const color = document.getElementById('bank-color').value;
   if (!name) { showToast('Informe o nome da conta ou caixa'); return; }
-  await addDoc(banksCol(), { uid: currentUser.uid, name, balance, color, createdAt: Date.now() });
+  await addDoc(banksCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, name, balance, color, createdAt: Date.now() });
   closeBankModal();
   await refreshAll();
   showToast('Conta ou caixa adicionada!');
@@ -2015,7 +2092,7 @@ window.saveGoal = async function() {
   const saved = parseFloat(document.getElementById('goal-saved').value) || 0;
   const deadline = document.getElementById('goal-deadline').value;
   if (!name || !target) { showToast('Preencha nome e valor'); return; }
-  await addDoc(goalsCol(), { uid: currentUser.uid, name, target, saved, deadline, createdAt: Date.now() });
+  await addDoc(goalsCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, name, target, saved, deadline, createdAt: Date.now() });
   closeGoalModal();
   await refreshAll();
   showToast('Objetivo criado!');
@@ -2062,15 +2139,15 @@ window.executeDeleteAll = async function() {
 
   try {
     // Deletar todas as transações do usuário
-    const txSnap = await getDocs(query(txCol(), where('uid', '==', currentUser.uid)));
+    const txSnap = await getDocs(sharedDataQuery(txCol()));
     for (const d of txSnap.docs) await deleteDoc(doc(db, 'vault_transactions', d.id));
 
     // Deletar todos os bancos
-    const bkSnap = await getDocs(query(banksCol(), where('uid', '==', currentUser.uid)));
+    const bkSnap = await getDocs(sharedDataQuery(banksCol()));
     for (const d of bkSnap.docs) await deleteDoc(doc(db, 'vault_banks', d.id));
 
     // Deletar todas as metas
-    const glSnap = await getDocs(query(goalsCol(), where('uid', '==', currentUser.uid)));
+    const glSnap = await getDocs(sharedDataQuery(goalsCol()));
     for (const d of glSnap.docs) await deleteDoc(doc(db, 'vault_goals', d.id));
 
     document.getElementById('delete-all-modal').classList.remove('open');
@@ -2104,7 +2181,7 @@ function renderSettings() {
 
 window.exportCSV = function() {
   if (!transactions.length) { showToast('Nenhum lançamento para exportar'); return; }
-  const header = 'Data;Tipo;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa';
+  const header = 'Data;Tipo;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa;Responsável';
   const rows = transactions
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(t => [
@@ -2113,7 +2190,8 @@ window.exportCSV = function() {
       `"${(t.description || '').replace(/"/g, '""')}"`,
       t.category || '',
       Number(t.amount).toFixed(2).replace('.', ','),
-      t.bankName || ''
+      t.bankName || '',
+      USERS_BY_UID[t.createdBy || (t.uid !== BUSINESS_UID ? t.uid : '')]?.name || ''
     ].join(';'));
   const csv = [header, ...rows].join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2398,7 +2476,9 @@ window.confirmImport = async function() {
   let count = 0;
   for (const t of importedTxs) {
     await addDoc(txCol(), {
-      uid: currentUser.uid,
+      uid: BUSINESS_UID,
+      businessId: BUSINESS_UID,
+      createdBy: currentUser.uid,
       type: t.type,
       description: t.description,
       amount: t.amount,
@@ -2419,8 +2499,7 @@ window.confirmImport = async function() {
   if (bankId && bankDelta !== 0) {
     const bank = banks.find(b => b.id === bankId);
     if (bank) {
-      const newBalance = (bank.balance || 0) + bankDelta;
-      await updateDoc(doc(db, 'vault_banks', bankId), { balance: newBalance });
+      await updateDoc(doc(db, 'vault_banks', bankId), { balance: increment(bankDelta) });
     }
   }
 
