@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Gordinho Financeiro" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Gordinho Financeiro — Gestão da Churrascaria</title>
-  <link rel="manifest" href="manifest.json?v=7" />
+  <link rel="manifest" href="manifest.json?v=8" />
   <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
   <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -1106,6 +1106,9 @@
     .auth-btn, .btn-save { background: var(--accent); color: #fff; border-radius: 12px; font-size: 0.95rem; font-weight: 700; }
     .auth-btn:hover, .btn-save:hover { background: #a91820; box-shadow: none; transform: none; }
     .auth-error { font-size: 0.85rem; }
+    .remember-login { display: flex; align-items: flex-start; gap: 10px; margin: -2px 0 18px; color: var(--text2); font-size: 0.86rem; cursor: pointer; line-height: 1.45; }
+    .remember-login input { width: 19px; height: 19px; margin-top: 1px; accent-color: var(--accent); flex-shrink: 0; }
+    .remember-login strong { display: block; color: var(--text); font-weight: 600; }
     .topnav { height: 80px; background: #fff; padding: 0 24px; backdrop-filter: none; }
     .topnav-logo { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 0.96rem; font-weight: 750; letter-spacing: -0.025em; line-height: 1.2; }
     .topnav-logo img { border-radius: 12px; flex-shrink: 0; }
@@ -1216,23 +1219,27 @@
 
 <!-- AUTH -->
 <div id="auth-screen">
-  <div class="auth-card">
+  <form class="auth-card" onsubmit="event.preventDefault(); doLogin()">
     <div class="auth-logo">
       <img class="auth-brand-icon" src="caixa-icon-192.png?v=3" alt="" width="88" height="88" />
       <h1>Gordinho Financeiro</h1>
       <p>Gestão Financeira da Churrascaria</p>
     </div>
     <div class="auth-field">
-      <label>Usuário</label>
-      <input type="text" id="login-user" placeholder="seu usuário" autocomplete="username" />
+      <label for="login-user">Usuário</label>
+      <input type="text" id="login-user" name="username" placeholder="seu usuário" autocomplete="username" autocapitalize="none" />
     </div>
     <div class="auth-field">
-      <label>Senha</label>
-      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
+      <label for="login-pass">Senha</label>
+      <input type="password" id="login-pass" name="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <button class="auth-btn" onclick="doLogin()">Entrar na minha conta</button>
+    <label class="remember-login" for="remember-login">
+      <input type="checkbox" id="remember-login" checked />
+      <span><strong>Manter conectado neste aparelho</strong>Você não precisará digitar usuário e senha ao abrir novamente.</span>
+    </label>
+    <button class="auth-btn" type="submit">Entrar na minha conta</button>
     <div class="auth-error" id="auth-error"></div>
-  </div>
+  </form>
 </div>
 
 <!-- APP -->
@@ -1455,7 +1462,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      Gordinho Financeiro · v1.6 · Gestão da churrascaria
+      Gordinho Financeiro · v1.7 · Gestão da churrascaria
     </div>
   </div>
 
@@ -1774,20 +1781,31 @@ let editingBankId = null;
 let realtimeUnsubscribers = [];
 
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const SESSION_STORAGE_KEY = 'gordinho_financeiro_session_uid';
 
 // ─── AUTH ───
+function activateUser(user) {
+  currentUser = user;
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-badge').textContent = user.name.toUpperCase();
+  document.getElementById('auth-error').textContent = '';
+  startRealtimeSync();
+  updateMonthLabel();
+}
+
 window.doLogin = function() {
   const u = document.getElementById('login-user').value.trim().toLowerCase();
   const p = document.getElementById('login-pass').value;
   const user = USERS[u];
   if (user && user.password === p) {
-    currentUser = user;
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    document.getElementById('user-badge').textContent = user.name.toUpperCase();
-    document.getElementById('auth-error').textContent = '';
-    startRealtimeSync();
-    updateMonthLabel();
+    try {
+      if (document.getElementById('remember-login').checked) localStorage.setItem(SESSION_STORAGE_KEY, user.uid);
+      else localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (error) {
+      console.warn('O aparelho não permitiu salvar a sessão.', error);
+    }
+    activateUser(user);
   } else {
     document.getElementById('auth-error').textContent = 'Usuário ou senha incorretos.';
   }
@@ -1795,6 +1813,7 @@ window.doLogin = function() {
 
 window.doLogout = function() {
   stopRealtimeSync();
+  try { localStorage.removeItem(SESSION_STORAGE_KEY); } catch (error) { console.warn('Não foi possível remover a sessão.', error); }
   currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -1802,7 +1821,13 @@ window.doLogout = function() {
   document.getElementById('login-pass').value = '';
 };
 
-document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') window.doLogin(); });
+try {
+  const savedUid = localStorage.getItem(SESSION_STORAGE_KEY);
+  const savedUser = Object.values(USERS).find(user => user.uid === savedUid);
+  if (savedUser) activateUser(savedUser);
+} catch (error) {
+  console.warn('O aparelho não permitiu restaurar a sessão.', error);
+}
 
 // ─── NAVIGATION ───
 window.showPage = function(page, btn) {
