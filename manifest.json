@@ -1,11 +1,11 @@
 {
-  "name": "Caixa do Gordinho — Gestão da Churrascaria",
-  "short_name": "Caixa do Gordinho",
+  "name": "Gordinho Financeiro — Gestão da Churrascaria",
+  "short_name": "Gordinho Financeiro",
   "description": "Gestão financeira da churrascaria com categorias e separação das movimentações pessoais do proprietário",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#35080b",
-  "theme_color": "#d82028",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     {

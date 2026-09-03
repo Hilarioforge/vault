@@ -3,39 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#d82028" />
+  <meta name="theme-color" content="#ffffff" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Caixa do Gordinho" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>Caixa do Gordinho — Gestão da Churrascaria</title>
-  <link rel="manifest" href="manifest.json?v=6" />
+  <meta name="apple-mobile-web-app-title" content="Gordinho Financeiro" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <title>Gordinho Financeiro — Gestão da Churrascaria</title>
+  <link rel="manifest" href="manifest.json?v=7" />
   <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
   <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
     :root {
-      --bg: #35080b;
-      --bg2: #490b10;
-      --bg3: #5c1016;
-      --surface: #65151b;
-      --surface2: #7a1a20;
-      --border: #a4252d;
-      --border-glow: #d82028;
-      --accent: #ffd43b;
-      --accent2: #f0a500;
-      --accent3: #ef4b52;
-      --accent4: #fff2b2;
-      --text: #fffdf7;
-      --text2: #f5d9d5;
-      --text3: #d79b95;
-      --income: #ffd43b;
-      --expense: #ef4b52;
-      --card-shadow: 0 8px 32px rgba(0,0,0,0.6);
-      --glow: 0 0 20px rgba(255,212,59,0.15);
-      --font-display: 'Orbitron', monospace;
-      --font-body: 'Rajdhani', sans-serif;
-      --font-mono: 'Space Mono', monospace;
+      --bg: #f8f9fb;
+      --bg2: #f7f8fa;
+      --bg3: #eef0f3;
+      --surface: #ffffff;
+      --surface2: #fff6d6;
+      --border: #e4e7ec;
+      --border-glow: #c5cad3;
+      --accent: #c82028;
+      --accent2: #966500;
+      --accent3: #d82028;
+      --accent4: #292d35;
+      --yellow: #ffd43b;
+      --text: #20242c;
+      --text2: #505967;
+      --text3: #697281;
+      --income: #8a6500;
+      --expense: #c82028;
+      --card-shadow: 0 4px 18px rgba(32,36,44,0.04);
+      --glow: none;
+      --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1077,6 +1078,138 @@
       font-weight: 700;
       line-height: 1.5;
     }
+    /* Interface clara: superfícies brancas, tipografia simples e cores da marca. */
+    :root { color-scheme: light; }
+    body { font-weight: 400; line-height: 1.5; }
+    body::before, body::after, .auth-card::before, .modal::before, .section-title::after { display: none; }
+    button, input, select { font: inherit; }
+    button { touch-action: manipulation; }
+    button:disabled { opacity: 0.55; cursor: wait; }
+    :focus-visible { outline: 3px solid #f3bd27; outline-offset: 3px; }
+    .auth-logo h1, .topnav-logo, .summary-value { text-shadow: none; }
+    .auth-logo p, .auth-field label, .auth-btn, .logout-btn, .nav-btn, .section-title,
+    .month-label, .summary-label, .modal-title, .form-field label { text-transform: none; letter-spacing: 0; }
+    .user-badge, .summary-value, .add-btn, .tx-meta, .btn-save, .bar-label, #toast,
+    .empty-state, .chip, .score-sub { letter-spacing: 0; }
+    .summary-value, .tx-amount, .bank-balance, .score-pct { font-variant-numeric: tabular-nums; }
+    #auth-screen { padding: 24px; background: #fff; overflow-y: auto; }
+    .auth-card { padding: 32px; border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--card-shadow); }
+    .auth-logo { margin-bottom: 32px; }
+    .auth-brand-icon { display: block; margin: 0 auto 20px; border-radius: 24px; }
+    .auth-logo h1 { color: var(--text); font-size: 1.7rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1.2; }
+    .auth-logo p { margin-top: 10px; font-size: 0.88rem; color: var(--text2); }
+    .auth-field label, .form-field label { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .auth-field input, .form-field input, .form-field select { font-size: 1rem; background: #fff; border-radius: 12px; min-height: 48px; }
+    .auth-field input:focus, .form-field input:focus, .form-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #c8202810; }
+    input::placeholder { color: #77808e; opacity: 1; }
+    .form-field select { appearance: auto; -webkit-appearance: auto; }
+    .auth-btn, .btn-save { background: var(--accent); color: #fff; border-radius: 12px; font-size: 0.95rem; font-weight: 700; }
+    .auth-btn:hover, .btn-save:hover { background: #a91820; box-shadow: none; transform: none; }
+    .auth-error { font-size: 0.85rem; }
+    .topnav { height: 80px; background: #fff; padding: 0 24px; backdrop-filter: none; }
+    .topnav-logo { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 0.96rem; font-weight: 750; letter-spacing: -0.025em; line-height: 1.2; }
+    .topnav-logo img { border-radius: 12px; flex-shrink: 0; }
+    .topnav-logo small { display: block; margin-top: 4px; font-weight: 400; color: var(--text3); font-size: 0.7rem; letter-spacing: 0; }
+    .topnav-user { gap: 10px; }
+    .user-badge { font-size: 0.73rem; font-weight: 600; text-transform: capitalize; max-width: 98px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn { border: 0; border-radius: 10px; padding: 10px 12px; background: var(--bg2); font-size: 0.78rem; }
+    .bottom-nav { background: #fff; backdrop-filter: none; padding: 8px 6px calc(8px + env(safe-area-inset-bottom)); box-shadow: 0 -4px 18px #20242c05; gap: 4px; }
+    .nav-btn { border-radius: 14px; font-size: 0.72rem; font-weight: 500; padding: 10px 4px; gap: 5px; }
+    .nav-btn.active { background: #fff0f0; color: var(--accent); font-weight: 700; }
+    .nav-btn.active .nav-icon { filter: none; }
+    .nav-btn svg { width: 22px; height: 22px; }
+    .page { padding: 24px 20px calc(110px + env(safe-area-inset-bottom)); }
+    .dashboard-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .dashboard-heading p { font-size: 0.8rem; color: var(--text3); margin-bottom: 4px; }
+    .dashboard-heading h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1.3; }
+    .quick-add { border: 0; background: var(--accent); color: #fff; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0; cursor: pointer; }
+    .quick-add span { display: none; }
+    .month-nav { padding: 8px; margin-bottom: 24px; border-radius: 14px; box-shadow: none; }
+    .month-nav button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: var(--bg2); font-size: 1.5rem; }
+    .month-label { font-size: 0.95rem; font-weight: 600; }
+    .business-context { background: #fff9e6; border: 1px solid #f2e7bf; border-radius: 14px; padding: 14px 16px; font-size: 0.82rem; font-weight: 400; line-height: 1.6; }
+    .business-context strong { font-weight: 650; }
+    .section-title { font-size: 1rem; font-weight: 650; color: var(--text); margin: 26px 0 14px; }
+    .summary-grid { gap: 12px; }
+    .summary-card { padding: 20px; border-radius: 18px; box-shadow: var(--card-shadow); }
+    .summary-card::before { display: none; }
+    .summary-card.balance { order: -1; padding: 24px; border-top: 4px solid var(--accent); }
+    .summary-card.banks { background: #fff8de; border-color: #f3e4ae; }
+    .summary-label { font-size: 0.8rem; font-weight: 500; color: var(--text2); line-height: 1.45; margin-bottom: 8px; }
+    .summary-value { font-size: clamp(1.2rem, 4.7vw, 1.8rem); font-weight: 700; letter-spacing: -0.035em; overflow-wrap: anywhere; }
+    .summary-card.balance .summary-value { font-size: 2rem; }
+    .summary-value.income, .summary-value.expense { text-shadow: none; }
+    .summary-value.personal { color: var(--text); }
+    .summary-card.personal .field-note { font-size: 0.76rem; font-weight: 400; }
+    .field-note, .metric-note { font-size: 0.82rem; font-weight: 400; line-height: 1.6; }
+    .bank-item, .tx-item, .chart-container, .settings-section { border-radius: 16px; box-shadow: var(--card-shadow); }
+    #dash-banks-list > div { border-radius: 14px !important; }
+    #dash-banks-list > div > div > div { box-shadow: none !important; }
+    .bank-item { flex-wrap: wrap; gap: 12px; }
+    .bank-balance { font-weight: 700; font-size: 1rem; }
+    .bank-actions { margin-left: auto; }
+    .icon-btn { border-radius: 10px; min-height: 36px; min-width: 36px; }
+    .add-btn { justify-content: center; background: #fff; color: var(--accent); border: 1px solid var(--border); border-radius: 12px; font-weight: 600; font-size: 0.88rem; padding: 14px; line-height: 1.4; }
+    .add-btn:hover { background: #fff4f4; }
+    #page-transactions > div > .add-btn:first-child { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tx-item { padding: 16px; }
+    .tx-item::before { display: none; }
+    .tx-desc { font-size: 0.95rem; font-weight: 600; }
+    .tx-meta { font-size: 0.76rem; font-weight: 400; line-height: 1.6; }
+    .tx-amount { font-size: 0.98rem; }
+    .tx-author-badge { background: #fff2c1; border: 0; color: #775500; box-shadow: none; font-size: 0.7rem; }
+    .tx-scope-badge { border-radius: 7px; background: var(--bg2); font-size: 0.7rem; font-weight: 500; }
+    .tx-scope-badge.personal { background: #fff9e6; color: #806000; border-color: #ecdcab; }
+    .cat-name, .cat-amount { font-size: 0.88rem; font-weight: 600; }
+    .category-list { border-radius: 16px; }
+    .cat-bar { background: var(--bg3); }
+    .chip { padding: 9px 14px; font-size: 0.8rem; font-weight: 500; }
+    .chip.active { background: #fff0f0; border-color: #efb6b9; font-weight: 600; }
+    .empty-state { font-size: 0.88rem; border-radius: 16px; background: #fff; border: 1px solid var(--border); line-height: 1.6; }
+    .empty-icon { opacity: 0.75; }
+    .score-sub { font-size: 0.65rem; }
+    .bar-label { font-size: 0.75rem; }
+    .bar.income-bar { background: #e4b322; opacity: 1; }
+    .bar.expense-bar { background: #d82028; opacity: 1; }
+    .settings-item { gap: 16px; padding: 18px; }
+    .settings-item-label { font-size: 0.95rem; font-weight: 600; }
+    .settings-item-sub { font-size: 0.78rem; font-weight: 400; line-height: 1.6; margin-top: 5px; }
+    .category-link { font-size: 0.85rem; font-weight: 600; }
+    .modal-overlay { background: #20242c66; backdrop-filter: blur(3px); }
+    .modal { max-width: 540px; border-radius: 24px 24px 0 0; padding: 24px 24px calc(28px + env(safe-area-inset-bottom)); box-shadow: 0 -8px 40px #20242c15; }
+    .modal-title { color: var(--text); font-size: 1.2rem; font-weight: 700; }
+    .type-toggle { padding: 4px; border-radius: 14px; background: var(--bg2); gap: 4px; }
+    .type-btn { border-color: transparent; border-radius: 10px; font-size: 0.9rem; font-weight: 600; }
+    .type-btn.income.active { background: #fff5cc; border-color: #eadaaa; }
+    .type-btn.expense.active { background: #fff; border-color: #f0cbcd; }
+    .btn-cancel { border-radius: 12px; font-size: 0.95rem; }
+    .modal-actions button { min-height: 48px; }
+    #toast { background: #292d35; color: #fff; border: 0; border-radius: 14px; font-size: 0.88rem; max-width: calc(100vw - 32px); white-space: normal; text-align: center; box-shadow: 0 6px 24px #20242c25; }
+    #import-preview select { border-radius: 8px !important; font-size: 0.85rem !important; }
+    #import-preview > div { border-radius: 12px !important; }
+    @media (min-width: 600px) {
+      .page { max-width: 760px; padding: 28px 28px 120px; }
+      .topnav { max-width: 760px; left: auto; transform: none; width: 100%; margin: 0 auto; border-radius: 0 0 18px 18px; }
+      .bottom-nav { max-width: 760px; border-radius: 20px 20px 0 0; }
+      .quick-add { width: auto; padding: 0 16px; display: flex; align-items: center; gap: 8px; }
+      .quick-add span { display: inline; font-size: 0.85rem; font-weight: 600; }
+      .dashboard-heading h1 { font-size: 1.65rem; }
+      .modal-overlay { align-items: center; padding: 24px; }
+      .modal { border-radius: 24px; }
+    }
+    @media (max-width: 430px) {
+      .topnav { padding: 0 16px; }
+      .topnav-logo { font-size: 0.88rem; gap: 8px; }
+      .topnav-user { gap: 6px; }
+      .user-badge { max-width: 64px; font-size: 0.68rem; }
+      .logout-btn { padding: 9px; }
+      .page { padding-left: 16px; padding-right: 16px; }
+      .summary-card { padding: 16px; }
+      .summary-label { font-size: 0.77rem; }
+      .auth-card { padding: 28px 24px; }
+      .settings-item { padding: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
@@ -1085,7 +1218,8 @@
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <h1>CAIXA DO GORDINHO</h1>
+      <img class="auth-brand-icon" src="caixa-icon-192.png?v=3" alt="" width="88" height="88" />
+      <h1>Gordinho Financeiro</h1>
       <p>Gestão Financeira da Churrascaria</p>
     </div>
     <div class="auth-field">
@@ -1096,7 +1230,7 @@
       <label>Senha</label>
       <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" />
     </div>
-    <button class="auth-btn" onclick="doLogin()">ACESSAR SISTEMA</button>
+    <button class="auth-btn" onclick="doLogin()">Entrar na minha conta</button>
     <div class="auth-error" id="auth-error"></div>
   </div>
 </div>
@@ -1104,10 +1238,10 @@
 <!-- APP -->
 <div id="app">
   <nav class="topnav">
-    <div class="topnav-logo">CAIXA DO GORDINHO</div>
+    <div class="topnav-logo"><img src="caixa-icon-192.png?v=3" alt="" width="40" height="40" /><span>Gordinho Financeiro<small>Gestão da churrascaria</small></span></div>
     <div class="topnav-user">
       <div class="user-badge" id="user-badge">—</div>
-      <button class="logout-btn" onclick="doLogout()">SAIR</button>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
     </div>
   </nav>
 
@@ -1119,7 +1253,8 @@
       <button onclick="changeMonth(1)">›</button>
     </div>
 
-    <div class="business-context">☁️ Dados compartilhados. <strong>Churrascaria</strong> e <strong>Pessoal do proprietário</strong> separados. O resultado e os gráficos consideram apenas a churrascaria; os saldos das contas refletem todas as movimentações vinculadas.</div>
+    <div class="dashboard-heading"><div><p>Visão geral</p><h1>Seu financeiro, organizado.</h1></div><button class="quick-add" onclick="openTxModal()" aria-label="Novo lançamento">+ <span>Novo lançamento</span></button></div>
+    <div class="business-context"><strong>Churrascaria e proprietário, cada um no seu lugar.</strong> O resultado considera a operação. Os gastos pessoais aparecem separados.</div>
 
     <div class="section-title">Resumo Financeiro do Mês</div>
     <div class="summary-grid">
@@ -1154,7 +1289,7 @@
     <div class="score-ring-container">
       <div class="score-ring">
         <svg viewBox="0 0 140 140">
-          <circle cx="70" cy="70" r="58" fill="none" stroke="#7a1a20" stroke-width="10"/>
+          <circle cx="70" cy="70" r="58" fill="none" stroke="#eef0f3" stroke-width="10"/>
           <circle id="score-circle" cx="70" cy="70" r="58" fill="none" stroke="#ffd43b" stroke-width="10"
             stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round"
             style="transition: stroke-dashoffset 0.8s ease;"/>
@@ -1320,7 +1455,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      CAIXA DO GORDINHO v1.5 — GESTÃO FINANCEIRA DA CHURRASCARIA
+      Gordinho Financeiro · v1.6 · Gestão da churrascaria
     </div>
   </div>
 
@@ -2493,7 +2628,7 @@ window.exportCSV = function() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `caixa_do_gordinho_lancamentos_${new Date().toISOString().split('T')[0]}.csv`;
+  a.download = `gordinho_financeiro_lancamentos_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exportado!');
