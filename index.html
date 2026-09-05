@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-title" content="Gordinho Financeiro" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Gordinho Financeiro — Gestão da Churrascaria</title>
-  <link rel="manifest" href="manifest.json?v=8" />
+  <link rel="manifest" href="manifest.json?v=9" />
   <link rel="icon" type="image/png" href="caixa-icon-192.png?v=3" />
   <link rel="apple-touch-icon" href="caixa-icon-192.png?v=3" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -1462,7 +1462,7 @@
     </div>
 
     <div style="font-family:var(--font-mono);font-size:0.6rem;color:var(--text3);text-align:center;margin-top:32px;letter-spacing:0.15em;">
-      Gordinho Financeiro · v1.7 · Gestão da churrascaria
+      Gordinho Financeiro · v1.8 · Gestão da churrascaria
     </div>
   </div>
 
@@ -1510,6 +1510,19 @@
     <div class="form-field">
       <label>Data</label>
       <input type="date" id="tx-date" />
+    </div>
+    <div class="form-field" id="tx-payment-field" hidden>
+      <label for="tx-payment-method">Como a receita entrou?</label>
+      <select id="tx-payment-method">
+        <option value="pix">PIX</option>
+        <option value="cash">Dinheiro</option>
+        <option value="debit_card">Cartão de débito</option>
+        <option value="credit_card">Cartão de crédito</option>
+        <option value="bank_transfer">Transferência bancária</option>
+        <option value="delivery_app">Aplicativo de delivery</option>
+        <option value="other">Outra origem</option>
+      </select>
+      <div class="field-note">Informe a forma de recebimento para facilitar a conferência do caixa.</div>
     </div>
     <div class="form-field">
       <label for="tx-scope">Natureza do lançamento</label>
@@ -1940,6 +1953,11 @@ function escapeHtml(value) {
 function scopeOf(tx) { return tx.scope === 'personal' ? 'personal' : 'business'; }
 function scopeLabel(scope) { return scope === 'personal' ? 'Pessoal do proprietário' : 'Churrascaria'; }
 function signedAmount(tx) { return tx.type === 'income' ? tx.amount : -tx.amount; }
+const PAYMENT_METHOD_LABELS = {
+  pix: 'PIX', cash: 'Dinheiro', debit_card: 'Cartão de débito', credit_card: 'Cartão de crédito',
+  bank_transfer: 'Transferência bancária', delivery_app: 'Aplicativo de delivery', other: 'Outra origem'
+};
+function paymentMethodLabel(value) { return PAYMENT_METHOD_LABELS[value] || 'Não informado'; }
 
 function monthTxs(m, y) {
   return transactions.filter(t => {
@@ -2107,7 +2125,7 @@ function renderTransactions() {
             <div class="tx-desc">${escapeHtml(t.description)}</div>
             ${authorBadge}
           </div>
-          <div class="tx-meta">${dateStr} · ${escapeHtml(t.category)}${t.bankName ? ' · ' + escapeHtml(t.bankName) : ''}</div>
+          <div class="tx-meta">${dateStr} · ${escapeHtml(t.category)}${t.type === 'income' ? ' · ' + paymentMethodLabel(t.paymentMethod) : ''}${t.bankName ? ' · ' + escapeHtml(t.bankName) : ''}</div>
           <span class="tx-scope-badge ${scopeOf(t)}">${scopeLabel(scopeOf(t))}</span>
         </div>
         <div class="tx-amount ${t.type}">${sign} ${fmt(t.amount)}</div>
@@ -2217,6 +2235,7 @@ window.openTxModal = function(id = null) {
   document.getElementById('tx-desc').value = existing?.description || '';
   document.getElementById('tx-amount').value = existing?.amount || '';
   document.getElementById('tx-date').value = existing?.date || new Date().toISOString().split('T')[0];
+  document.getElementById('tx-payment-method').value = existing?.paymentMethod || 'pix';
   txScope = existing ? scopeOf(existing) : 'business';
   document.getElementById('tx-scope').value = txScope;
   setType(existing?.type || 'expense', existing?.category || '');
@@ -2234,6 +2253,7 @@ window.setType = function(t, selectedCategory = '') {
   txType = t;
   document.getElementById('type-income-btn').classList.toggle('active', t === 'income');
   document.getElementById('type-expense-btn').classList.toggle('active', t === 'expense');
+  document.getElementById('tx-payment-field').hidden = t !== 'income';
   updateCategoryOptions(t, txScope, selectedCategory);
   document.getElementById('tx-desc').placeholder = t === 'income'
     ? 'Ex: vendas no salão, delivery, evento...'
@@ -2274,6 +2294,7 @@ window.saveTx = async function() {
   const amount = parseFloat(document.getElementById('tx-amount').value);
   const date = document.getElementById('tx-date').value;
   const category = document.getElementById('tx-category').value;
+  const paymentMethod = txType === 'income' ? document.getElementById('tx-payment-method').value : '';
   const bankId = document.getElementById('tx-bank').value;
   const bankName = bankId ? banks.find(b => b.id === bankId)?.name || '' : '';
 
@@ -2284,7 +2305,7 @@ window.saveTx = async function() {
   saveBtn.disabled = true;
   try {
     if (!editingTxId) {
-      await addDoc(txCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, type: txType, scope: txScope, description: desc, amount, date, category, bankId, bankName, createdAt: Date.now() });
+      await addDoc(txCol(), { uid: BUSINESS_UID, businessId: BUSINESS_UID, createdBy: currentUser.uid, type: txType, scope: txScope, description: desc, amount, date, category, paymentMethod, bankId, bankName, createdAt: Date.now() });
       await updateBankBalance(bankId, amount, txType);
     } else {
       const txId = editingTxId;
@@ -2299,7 +2320,7 @@ window.saveTx = async function() {
         for (const [id, delta] of deltas) {
           if (delta) firestoreTx.update(doc(db, 'vault_banks', id), { balance: increment(delta) });
         }
-        firestoreTx.update(txRef, { type: txType, scope: txScope, description: desc, amount, date, category, bankId, bankName, updatedAt: Date.now(), updatedBy: currentUser.uid });
+        firestoreTx.update(txRef, { type: txType, scope: txScope, description: desc, amount, date, category, paymentMethod, bankId, bankName, updatedAt: Date.now(), updatedBy: currentUser.uid });
       });
     }
     closeTxModal();
@@ -2635,7 +2656,7 @@ function renderSettings() {
 window.exportCSV = function() {
   if (!transactions.length) { showToast('Nenhum lançamento para exportar'); return; }
   const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const header = 'Data;Tipo;Natureza;Descrição;Categoria ou Centro de Custo;Valor;Conta ou Caixa;Responsável';
+  const header = 'Data;Tipo;Natureza;Descrição;Categoria ou Centro de Custo;Origem da Receita;Valor;Conta ou Caixa;Responsável';
   const rows = transactions
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     .map(t => [
@@ -2644,6 +2665,7 @@ window.exportCSV = function() {
       scopeLabel(scopeOf(t)),
       csvCell(t.description),
       csvCell(t.category),
+      t.type === 'income' ? paymentMethodLabel(t.paymentMethod) : '',
       Number(t.amount).toFixed(2).replace('.', ','),
       csvCell(t.bankName),
       csvCell(USERS_BY_UID[t.createdBy || (t.uid !== BUSINESS_UID ? t.uid : '')]?.name || '')
@@ -2753,7 +2775,7 @@ function parseOFX(content) {
     const amount = Math.abs(amt);
     const category = autoCategory(memo, type);
 
-    txs.push({ type, scope: 'business', description: cleanDesc(memo), amount, date, category });
+    txs.push({ type, scope: 'business', description: cleanDesc(memo), amount, date, category, paymentMethod: type === 'income' ? autoPaymentMethod(memo) : '' });
   });
   return txs;
 }
@@ -2817,7 +2839,7 @@ function parseCSV(content) {
     }
 
     const category = autoCategory(rawDesc, type);
-    txs.push({ type, scope: 'business', description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category });
+    txs.push({ type, scope: 'business', description: cleanDesc(rawDesc), amount: Math.abs(amount), date, category, paymentMethod: type === 'income' ? autoPaymentMethod(rawDesc) : '' });
   }
   return txs;
 }
@@ -2866,6 +2888,17 @@ function autoCategory(desc, type = 'expense') {
   return 'Outras Despesas';
 }
 
+function autoPaymentMethod(description) {
+  const value = description.toLowerCase();
+  if (/pix/.test(value)) return 'pix';
+  if (/d[eé]bito/.test(value)) return 'debit_card';
+  if (/cr[eé]dito|cart[aã]o|stone|cielo|rede |pagseguro|maquininha/.test(value)) return 'credit_card';
+  if (/ifood|rappi|delivery|entrega/.test(value)) return 'delivery_app';
+  if (/dinheiro|esp[eé]cie/.test(value)) return 'cash';
+  if (/ted|doc|transfer/.test(value)) return 'bank_transfer';
+  return 'other';
+}
+
 function showImportPreview() {
   const income = importedTxs.filter(t => t.type === 'income').reduce((s,t) => s+t.amount, 0);
   const expense = importedTxs.filter(t => t.type === 'expense').reduce((s,t) => s+t.amount, 0);
@@ -2895,6 +2928,9 @@ function showImportPreview() {
           <option value="business" ${scopeOf(t) === 'business' ? 'selected' : ''}>Churrascaria</option>
           <option value="personal" ${scopeOf(t) === 'personal' ? 'selected' : ''}>Pessoal do proprietário</option>
         </select>
+        ${t.type === 'income' ? `<select aria-label="Origem da receita ${i + 1}" onchange="updateImportPaymentMethod(${i}, this.value)" style="width:100%;margin-top:6px;padding:6px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;font-weight:700;">
+          ${Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => `<option value="${value}" ${value === t.paymentMethod ? 'selected' : ''}>${label}</option>`).join('')}
+        </select>` : ''}
         <select aria-label="Categoria do lançamento ${i + 1}" onchange="updateImportCategory(${i}, this.value)" style="width:100%;margin-top:6px;padding:6px 4px;background:var(--bg2);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--font-body);font-size:0.8rem;font-weight:700;">
           ${getCategoryOptions(t.type, scopeOf(t)).map(([value, label]) => `<option value="${escapeHtml(value)}" ${value === t.category ? 'selected' : ''}>${escapeHtml(label)}</option>`).join('')}
         </select>
@@ -2914,6 +2950,11 @@ function showImportPreview() {
 window.updateImportCategory = function(i, category) {
   const tx = importedTxs[i];
   if (tx && getCategoryOptions(tx.type, scopeOf(tx)).some(([value]) => value === category)) tx.category = category;
+};
+
+window.updateImportPaymentMethod = function(i, paymentMethod) {
+  const tx = importedTxs[i];
+  if (tx?.type === 'income' && PAYMENT_METHOD_LABELS[paymentMethod]) tx.paymentMethod = paymentMethod;
 };
 
 window.updateImportScope = function(i, scope) {
@@ -2952,6 +2993,7 @@ window.confirmImport = async function() {
       amount: t.amount,
       date: t.date,
       category: t.category,
+      paymentMethod: t.type === 'income' ? (t.paymentMethod || 'other') : '',
       bankId,
       bankName,
       imported: true,
